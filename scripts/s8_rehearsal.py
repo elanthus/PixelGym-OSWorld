@@ -108,21 +108,33 @@ def loopback_only_sockets() -> Iterator[None]:
         socket.socket = original  # type: ignore[misc]
 
 
-def verify(state: Path) -> dict[str, Any]:
-    """Recompute the semantic verification from stored bytes; the directory is unchanged."""
+def verify(state: Path, qualification: Path | None = None) -> dict[str, Any]:
+    """Recompute the semantic verification from stored bytes; the directory is unchanged.
+
+    ``qualification`` names a restored S7 qualification for a recovery check. It is then
+    required: an absent directory, a broken seal, or a seal that differs from the digest in
+    the S8 plan raises. Without it the path recorded in the plan is used; an absent directory
+    there leaves ``qualification_seal_verified`` as ``None``, and a different seal raises.
+    """
     verify_seal(state)
     observed = inspect_rehearsal(state)
     if observed != read_json(state / "verification.json"):
         raise ValueError("S8 stored semantic verification differs from restored evidence")
     plan = read_json(state / "plan.json")
-    qualification = Path(plan["qualification_path"])
+    explicit = qualification is not None
+    qualification = qualification if explicit else Path(plan["qualification_path"])
+    assert qualification is not None
     qualification_seal_verified: bool | None = None
+    if explicit and not qualification.is_dir():
+        raise ValueError("the S7 qualification directory given for recovery is absent")
     if qualification.is_dir():
         verify_seal(qualification)
-        qualification_seal_verified = (
+        if (
             content_digest(read_json(qualification / "seal.json"))
-            == plan["qualification_seal_sha256"]
-        )
+            != (plan["qualification_seal_sha256"])
+        ):
+            raise ValueError("the S7 qualification seal differs from the digest in the S8 plan")
+        qualification_seal_verified = True
     # No digest of the rendered report: the acceptance subprocess runs this command before
     # acceptance-checks.json exists, and the report includes that file, so a report digest
     # sealed in the acceptance record could never be re-derived by a later verify.
@@ -227,6 +239,13 @@ def main() -> None:
     for name in ("verify", "report"):
         command = commands.add_parser(name)
         command.add_argument("--state", type=Path, required=True)
+        if name == "verify":
+            command.add_argument(
+                "--qualification",
+                type=Path,
+                default=None,
+                help="restored S7 qualification to require instead of the path in the S8 plan",
+            )
     args = parser.parse_args()
     if args.command == "prepare":
         with no_network():
@@ -260,12 +279,17 @@ def main() -> None:
         }
     elif args.command == "verify":
         with no_network():
-            output = verify(args.state.resolve())
+            output = verify(
+                args.state.resolve(),
+                args.qualification.resolve() if args.qualification is not None else None,
+            )
     else:
         with no_network():
             print(render_report(stored_report(args.state.resolve())), end="")
         return
     print(json.dumps(output, sort_keys=True, allow_nan=False))
+    if any(status != 0 for status in output.get("acceptance_exit_statuses", {}).values()):
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

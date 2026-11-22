@@ -128,6 +128,10 @@ Limits of the drill: it ran on the same host. The Backblaze downloads ran outsid
 read credentials from the working checkout. The clone and the virtualenv packages were copied
 from the working checkout before the sandboxed steps. The sandbox profile is allow-default with a
 deny list. The S8 verifier is the amended command, not the one frozen at the rehearsal revision.
+In `b2-steps.jsonl`, the drill script's bucket-name redaction also replaced part of the checkout
+path in the `control-working-checkout-blocked` command; the command that ran is the one recorded
+for the same control in `local-steps.jsonl`. Both files are byte copies of the private logs and
+are left as written.
 The owner grades whether this meets the recovery check.
 
 ## Limits

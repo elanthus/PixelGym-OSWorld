@@ -42,6 +42,10 @@ at current `main` on 2026-11-19 and then signed the approval document for its ex
 - `s7-20261119-main` and `s8-20261119-main` were copied to the owner's private Backblaze B2 bucket
   with `rclone copy --checksum --immutable`. `rclone check --one-way` reported 0 differences
   for both (7,981 and 148 files), and `scripts/observe_b2_object_lock.py` listed the same counts.
+  Each Backblaze count is one more than the local receipt's (7,980 and 147) because the receipt
+  counts the archived member files and the uploaded directory also holds the archive's
+  `manifest.json`. The byte totals differ by exactly that file's size (1,920,623 and 31,192
+  bytes); `record.json` holds the reconciliation.
 - Both runs were later restored from the local archive and from Backblaze and re-verified; see
   finding 1 below. The proposal's 2026-11-20 amendment names Backblaze as the recovery copy.
 - The bucket held 27,669,229,089 bytes including versions after the upload. At $6.95 per TB per

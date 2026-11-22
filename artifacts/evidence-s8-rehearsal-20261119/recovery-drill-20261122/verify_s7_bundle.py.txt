@@ -1,0 +1,67 @@
+"""Verify a restored S7 run using only its own hash-bound source snapshot; no sends.
+
+Run with an isolated interpreter:
+    env -i PATH=/usr/bin:/bin LANG=C.UTF-8 <python> -I -B verify_s7_bundle.py <restored run root>
+The run root holds qualification/ and review/. Nothing outside the root is imported from the
+project: pixelgym and scripts come from qualification/source after its files are checked against
+qualification/source-binding.json.
+"""
+
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]).resolve()
+run = root / "qualification"
+
+
+def canonical(value):
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    ).encode()
+
+
+def digest(value):
+    return "sha256:" + hashlib.sha256(canonical(value)).hexdigest()
+
+
+binding = json.loads((run / "source-binding.json").read_bytes())
+observed = {
+    str(p.relative_to(run / "source")): "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest()
+    for p in (run / "source").rglob("*")
+    if p.is_file()
+}
+assert observed == binding["files"], "restored source snapshot differs from its binding"
+assert not any("pixelgym" in m or m.split(".")[0] == "scripts" for m in sys.modules)
+sys.path.insert(0, str(run / "source"))
+
+import pixelgym  # noqa: E402
+import scripts.s7_serving as serving  # noqa: E402
+from pixelgym.grounding.v5.retention import source_fingerprint  # noqa: E402
+from pixelgym.platform.s7_evidence import render_report, stored_report  # noqa: E402
+
+assert Path(pixelgym.__file__).resolve().is_relative_to(run / "source")
+assert Path(serving.__file__).resolve().is_relative_to(run / "source")
+before = source_fingerprint(root)
+with serving.no_network():
+    verification = serving.verify(run)
+    rendered = render_report(stored_report(run)).encode()
+stored_report_bytes = (root / "review/REPORT.md").read_bytes()
+assert rendered == stored_report_bytes, "re-rendered report differs from the archived report"
+original = json.loads((root / "review/command-logs/qualification.stdout.json").read_bytes())
+for key, value in verification.items():
+    assert original[key] == value, f"verify output {key} differs from the archived qualify output"
+assert before == source_fingerprint(root), "verification changed the restored bundle"
+verification.update(
+    {
+        "source_revision": binding["revision"],
+        "source_binding_sha256": digest(binding),
+        "seal_sha256": digest(json.loads((run / "seal.json").read_bytes())),
+        "rendered_report_sha256": hashlib.sha256(rendered).hexdigest(),
+        "archived_report_sha256": hashlib.sha256(stored_report_bytes).hexdigest(),
+        "imports_resolved_under_bundle_source": True,
+        "inspection_unchanged": True,
+    }
+)
+print(json.dumps(verification, sort_keys=True))

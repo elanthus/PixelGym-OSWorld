@@ -465,11 +465,13 @@ What this amendment does not settle:
 - **Retention.** The bucket has Object Lock enabled but no default retention, and the uploaded
   files carry none. Applying retention needs the owner's approval.
 - **Verifier isolation.** The text above asks for the verifier to run in an isolated
-  credential-free interpreter against the bundle's own source snapshot. The recorded restores of
-  `s7-20261119-main` and `s8-20261119-main` ran the verifier from the working checkout at the
-  bound revision instead.
-- **Qualification path.** A restored S8 state still names the original qualification directory,
-  so its verifier reads the original qualification.
+  credential-free interpreter against the bundle's own source snapshot. The 2026-11-20 restores
+  ran the verifier from the working checkout instead. The 2026-11-22 drill ran the S7 verifier
+  that way, and ran the S8 verifier from a separate clone because the recovery option did not
+  exist at the bound revision.
+- **Qualification path.** A sealed S8 plan names the original qualification directory. A
+  recovery check must therefore pass the restored qualification with `verify --qualification`,
+  which the 2026-11-22 drill did.
 - **Same host.** The recorded restores ran on the host that produced the evidence.
 
 The recorded steps for `s7-20261119-main` and `s8-20261119-main` are in the

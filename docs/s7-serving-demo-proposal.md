@@ -355,6 +355,14 @@ Run this single ordered lifecycle in an isolated persistent state directory outs
    of an old B episode as `deployment_changed`, then execute/close a new A NOOP. A's count is two.
    Attempt rollback to exhausted B: preparation must refuse it, append a failure event, and
    preserve A's active pointer. Neither redeploy nor rollback may reset B's count.
+
+   Owner decisions, 2026-11-22. In the executed rehearsal the rollback toward B was refused by the
+   rollback lineage rule before preparation ran, so it did not show the exhaustion check; the
+   separate redeploy did. The owner chose a
+   [narrow supplemental scenario](s8-rehearsal.md#rollback-for-exhaustion-supplement) in which
+   exhausted B is the eligible rollback target. It is implemented and not yet executed. For a live
+   episode from an older deployment (step 5), the owner accepts the existing unit regressions as
+   coverage, as an explicit exception to integrated evidence.
 7. Stop workers, caller environments, service writers, and stores in `finally` cleanup; preserve
    all evidence. The final local state records A as the last selected version. Services stop
    after the demonstration. No unrelated stack or volume is removed.

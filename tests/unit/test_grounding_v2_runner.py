@@ -475,6 +475,7 @@ def _write_approved_record(root: Path, **overrides: Any) -> Path:
     record = build_v2_freeze_draft(root)
     record["provider"] = _PaidProviderStub.name
     record["model"] = _PaidProviderStub.model
+    record["parameters"] = {}
     record["approval"] = {
         "owner": "owner@example.test",
         "approved_utc": "2026-10-25T00:00:00+00:00",
@@ -505,6 +506,14 @@ def test_v2_paid_execution_is_refused_without_a_complete_owner_approval(tmp_path
 
     _write_approved_record(root, provider=None, model=None)
     with pytest.raises(OwnerApprovalError, match="would call 'openrouter'"):
+        require_owner_approval(root, provider=provider, pilot=True)
+
+    _write_approved_record(root, parameters={"temperature": 0})
+    with pytest.raises(OwnerApprovalError, match="names parameters {'temperature': 0}"):
+        require_owner_approval(root, provider=provider, pilot=True)
+
+    _write_approved_record(root, parameters=None)
+    with pytest.raises(OwnerApprovalError, match="names parameters None"):
         require_owner_approval(root, provider=provider, pilot=True)
 
     _write_approved_record(root)
@@ -544,3 +553,34 @@ def test_runner_exits_before_any_paid_v2_call_without_owner_approval(
 
     assert not (root / V2_PROTOCOL.pilot_predictions_path).exists()
     assert not (root / ".cache").exists()
+
+
+def test_claude_provider_is_built_from_an_explicit_model_without_contacting_it() -> None:
+    script = _load_script()
+
+    provider = script.build_provider("claude", "claude-haiku-4-5-20251001")
+
+    assert provider.name == "claude-code-cli"
+    assert provider.model == "claude-haiku-4-5-20251001"
+    assert provider.parameters == {"temperature": None}
+    assert script.build_provider("mock", None).name == "mock"
+    with pytest.raises(SystemExit, match="requires --model"):
+        script.build_provider("claude", None)
+    with pytest.raises(SystemExit, match="only accepted with --provider claude"):
+        script.build_provider("mock", "claude-haiku-4-5-20251001")
+    args = script.parse_args(
+        [
+            "--provider",
+            "claude",
+            "--model",
+            "claude-haiku-4-5-20251001",
+            "--pilot",
+            "--max-new-calls",
+            "0",
+        ]
+    )
+    assert (args.provider, args.model, args.protocol) == (
+        "claude",
+        "claude-haiku-4-5-20251001",
+        "v1",
+    )

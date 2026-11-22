@@ -297,6 +297,84 @@ def test_claude_provider_extracts_usage_from_json_envelope(tmp_path: Path) -> No
     assert response.usage == {"input_tokens": 12, "output_tokens": 4}
 
 
+def _claude_invoke(tmp_path: Path, envelope: dict[str, object]) -> ProviderResponse:
+    image_path = tmp_path / "image.png"
+    Image.new("RGB", (2, 2), "white").save(image_path)
+
+    def runner(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        if "--version" in command:
+            return subprocess.CompletedProcess(command, 0, "2.1.224\n", "")
+        return subprocess.CompletedProcess(command, 0, json.dumps(envelope), "")
+
+    return ClaudeCodeCLIProvider(executable="claude-test", command_runner=runner).invoke(
+        image_path=image_path, prompt="p", schema=RAW_SCHEMA
+    )
+
+
+def test_claude_provider_reads_structured_output_when_result_text_is_empty(
+    tmp_path: Path,
+) -> None:
+    response = _claude_invoke(
+        tmp_path,
+        {"type": "result", "result": "", "is_error": False, "structured_output": {"y": 9, "x": 4}},
+    )
+
+    assert response.raw_response == '{"x":4,"y":9}'
+    assert response.request_failure is None
+    assert response.provider_metadata["response_field"] == "structured_output"
+
+
+def test_claude_provider_prefers_structured_output_over_result_text(tmp_path: Path) -> None:
+    response = _claude_invoke(
+        tmp_path,
+        {
+            "type": "result",
+            "result": "The target is near the top.",
+            "is_error": False,
+            "structured_output": {"x": 1, "y": 2},
+        },
+    )
+
+    assert response.raw_response == '{"x":1,"y":2}'
+    assert response.provider_metadata["response_field"] == "structured_output"
+
+
+def test_claude_provider_falls_back_to_result_text_without_structured_output(
+    tmp_path: Path,
+) -> None:
+    response = _claude_invoke(
+        tmp_path, {"type": "result", "result": '{"x":7,"y":8}', "is_error": False}
+    )
+
+    assert response.raw_response == '{"x":7,"y":8}'
+    assert response.request_failure is None
+    assert response.provider_metadata["response_field"] == "result"
+
+
+def test_claude_provider_reports_a_failure_with_neither_structured_output_nor_result(
+    tmp_path: Path,
+) -> None:
+    response = _claude_invoke(tmp_path, {"type": "result", "is_error": False})
+
+    assert response.raw_response is None
+    assert response.request_failure == "claude CLI produced no structured output or result text"
+    assert response.provider_metadata["response_field"] is None
+
+
+def test_claude_provider_ignores_structured_output_on_an_error_result(tmp_path: Path) -> None:
+    response = _claude_invoke(
+        tmp_path,
+        {"type": "result", "result": "x", "is_error": True, "structured_output": {"x": 1, "y": 2}},
+    )
+
+    assert response.raw_response is None
+    assert response.request_failure == "claude CLI reported an error result"
+
+
+def test_claude_provider_records_temperature_as_unset() -> None:
+    assert ClaudeCodeCLIProvider(executable="claude-test").parameters == {"temperature": None}
+
+
 def test_claude_provider_handles_nonzero_exit(tmp_path: Path) -> None:
     image_path = tmp_path / "image.png"
     Image.new("RGB", (2, 2), "white").save(image_path)

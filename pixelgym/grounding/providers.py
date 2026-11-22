@@ -23,7 +23,9 @@ CODEX_PARAMETERS: dict[str, Any] = {"reasoning_effort": "low", "temperature": No
 OPENROUTER_PARAMETERS: dict[str, Any] = {"temperature": 0, "seed": 20260809}
 CLAUDE_MODEL = "claude-sonnet-5"
 CLAUDE_HAIKU_MODEL = "claude-haiku-4-5-20251001"
-CLAUDE_PARAMETERS: dict[str, Any] = {"temperature": 0}
+# The Claude Code CLI exposes no temperature option, so the provider cannot set one. Record
+# that as ``None``, as the Codex provider does; earlier stored records that say 0 predate this.
+CLAUDE_PARAMETERS: dict[str, Any] = {"temperature": None}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -310,10 +312,22 @@ class ClaudeCodeCLIProvider:
                 request_failure="claude CLI produced non-object JSON output",
             )
         is_error = envelope.get("is_error", False)
-        raw_response = envelope.get("result") if not is_error else None
+        # With --json-schema the CLI returns the schema-conforming answer in
+        # ``structured_output``; ``result`` holds free text and may be empty. Prefer the
+        # structured field and fall back to ``result`` for envelopes that lack it.
+        structured = envelope.get("structured_output")
+        raw_response: Any = None
+        response_field: str | None = None
+        if not is_error:
+            if isinstance(structured, dict | list):
+                raw_response = json.dumps(structured, sort_keys=True, separators=(",", ":"))
+                response_field = "structured_output"
+            else:
+                raw_response = envelope.get("result")
+                response_field = "result" if isinstance(raw_response, str) else None
         failure = "claude CLI reported an error result" if is_error else None
         if not is_error and raw_response is None:
-            failure = "claude CLI produced no result text"
+            failure = "claude CLI produced no structured output or result text"
         usage = envelope.get("usage")
         return ProviderResponse(
             timestamp_utc=started_at,
@@ -326,6 +340,7 @@ class ClaudeCodeCLIProvider:
                 "cost_usd": envelope.get("total_cost_usd"),
                 "num_turns": envelope.get("num_turns"),
                 "session_id": envelope.get("session_id"),
+                "response_field": response_field,
             },
             provider_trace=[],
             request_failure=failure,

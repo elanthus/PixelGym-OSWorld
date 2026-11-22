@@ -195,6 +195,11 @@ def require_owner_approval(
             f"{record.get('model')!r}, but this run would call {provider.name!r} "
             f"{provider.model!r}"
         )
+    if record.get("parameters") != provider.parameters:
+        raise OwnerApprovalError(
+            f"freeze record names parameters {record.get('parameters')!r}, but this run "
+            f"would record {provider.parameters!r}"
+        )
     try:
         current_inputs = build_v2_freeze_draft(repository_root)["inputs"]
     except ValueError as exc:

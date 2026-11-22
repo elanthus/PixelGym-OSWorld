@@ -1,0 +1,234 @@
+{
+  "descriptions": {
+    "acceptance_regression": "run after the rehearsal at the rehearsal revision; the two skipped tests need PIXELGYM_RUN_V5_CLI_SANDBOX_TESTS=1 and the Claude CLI and were not run; the driver's own acceptance-checks.json holds only the stored_verification_replay command",
+    "command_templates": {
+      "object_lock_observation": "scripts/observe_b2_object_lock.py <prefix>",
+      "upload": "rclone copy <archive> bb:<bucket>/<prefix> --checksum --immutable",
+      "upload_check": "rclone check <archive> bb:<bucket>/<prefix> --one-way"
+    },
+    "count_reconciliation": "the local receipt counts the archived member files under files/; the uploaded directory also holds the archive's manifest.json, so each Backblaze count is one file and manifest_json_bytes larger",
+    "private_lfs_copy": "not made",
+    "recovery_checks_20261120": {
+      "limits": [
+        "each restored S8 state still names the original qualification directory in its plan, so its verify reads the original qualification, not a restored one",
+        "restores ran on the same host and checkout as the rehearsal",
+        "the earlier 2026-11-20T01:36Z Backblaze restore did not capture the download exit status; the s8-b2-download step here does",
+        "the verifier ran from the working checkout at the bound revision, not in an isolated credential-free interpreter against the bundle's source snapshot"
+      ],
+      "status_against_proposal": "the S7 proposal as first written requires a fresh-cache private LFS restore, which was not made; the owner amended the proposal on 2026-11-20 to make a Backblaze B2 restore the recovery copy; the recorded steps follow the amended check except that the verifier ran from the working checkout rather than an isolated interpreter against the bundled source; the owner grades whether the check is met"
+    },
+    "recovery_drill_20261122": {
+      "campaign_sends": 0,
+      "code_location": "a separate clone outside the working checkout",
+      "isolation": {
+        "controls": "ls of the original S8 state, the original S7 qualification, and the working checkout's scripts directory each exited nonzero inside the sandbox",
+        "denied_in_b2_drill_also": [
+          "evidence/archives (local archives)"
+        ],
+        "denied_in_both": [
+          "the working checkout",
+          "evidence/runs (original S7 and S8 run directories)",
+          "evidence/restores (earlier restores)",
+          "evidence-backup"
+        ],
+        "mechanism": "sandbox-exec, allow-default profile with a deny list for file-read* and file-write*"
+      },
+      "limits": [
+        "same host as the rehearsal",
+        "the Backblaze downloads ran outside the sandbox and read credentials from the working checkout's .env",
+        "the clone was taken from the working checkout's Git repository and the virtualenv packages were copied from the working virtualenv before the sandboxed steps",
+        "the sandbox profile is allow-default with a deny list, not deny-default",
+        "the S8 verifier is the amended command at the code revision above, not the verifier frozen at the rehearsal revision; the S7 verifier is the bundle's own frozen code",
+        "the drill script and sandbox profiles contain local paths and are retained privately, with digests in the raw output"
+      ],
+      "negative_controls": "an absent qualification directory and the nested 2026-10-27 predecessor qualification (sealed and valid, but not the one the S8 plan binds) were each passed with --qualification; plain verify without --qualification was also run as an observation",
+      "purpose": "repeat the local-archive and Backblaze restores with the original run directories and the working checkout inaccessible, and require the restored S7 qualification explicitly",
+      "python_environment": "a new virtualenv on the same Homebrew Python 3.12.16, with site-packages copied from the working virtualenv except torch, sympy, mpmath and the editable pixelgym link",
+      "raw_output": "stdout and stderr of every step, the drill script and both sandbox profiles are retained privately; each step file row carries stdout_sha256 and stderr_sha256",
+      "s7_verifier": {
+        "file": "recovery-drill-20261122/verify_s7_bundle.py.txt",
+        "how": "env -i, python -I -B; imports pixelgym and scripts only from the restored bundle's own source snapshot after checking it against source-binding.json"
+      },
+      "s8_verifier_command": "scripts.s8_rehearsal verify --state <restored S8 state> --qualification <restored S7 qualification>"
+    }
+  },
+  "limitations": [
+    "the owner has not graded S8; this record declares no verdict",
+    "the audit actor is a string, not authenticated human identity; the approval digest is the recorded authority",
+    "real-provider requests and spending are declared constants of the fixture-only boundary, not independent network or billing measurements",
+    "the s7-20261027-s8driver qualification has a local archive only; a copy is nested in the s7-20261119-main archive as a predecessor",
+    "no Object Lock retention is set on the uploaded files, and no private LFS copy was made",
+    "qualify, verify, and report exit statuses for s7-20261027-s8driver were partly not captured in its own logs; that run was not used for this rehearsal",
+    "worker sandbox proofs are self-reported by the launcher and their profile text was not retained",
+    "the recovery check follows the 2026-11-20 amendment (Backblaze), which was written after the restores ran; the verifier was not run in an isolated interpreter",
+    "the rollback-to-B probe shows the lineage rule, not exhaustion; the supplemental scenario the owner chose for it has not been run",
+    "stale-deployment refusals were observed only for ended episodes; the owner accepted unit regressions for the live case",
+    "operator_statements and derived.storage_estimate rest on what the operator typed; a reviewer without the private inputs cannot recompute the derived block"
+  ],
+  "not_captured": [
+    {
+      "detail": "not recorded for these runs; an earlier version of this record gave 1.76.0, which was copied from a previous evidence record in the repository and not observed here",
+      "field": "rclone version used for these uploads"
+    },
+    {
+      "detail": "the command's status was masked by a pipe",
+      "field": "exit status of the first Backblaze download of s8-20261119-main (2026-11-20T01:36Z)"
+    },
+    {
+      "detail": "seen as 0 on the terminal only; see operator_observations.s8_upload",
+      "field": "copy and check exit statuses of the s8-20261119-main upload in a retained log"
+    },
+    {
+      "detail": "copy and check ran without a log file; see operator_observations.drill_log_upload",
+      "field": "any log of the s8-recovery-drill-20261122 upload"
+    },
+    {
+      "detail": "terminal output only; see operator_observations.backblaze_storage",
+      "field": "bucket totals from rclone size"
+    },
+    {
+      "detail": "the driver retained digests only",
+      "field": "sandbox profile bytes for the five rehearsal worker launches"
+    },
+    {
+      "detail": "the report logs record exit status, line count, and stderr size but not the command",
+      "field": "the command line of each report command"
+    },
+    {
+      "detail": "its own logs say they were not captured; that run was not used for this rehearsal",
+      "field": "exit statuses of prepare and qualify for the unused s7-20261027-s8driver qualification"
+    }
+  ],
+  "note": "Everything in this file is an operator statement: it cannot be derived from the private stored evidence or the retained logs. The generator copies it into record.json unchanged. Qualification and rehearsal content stays private. The owner grades S8; nothing here is a verdict.",
+  "operator_observations": {
+    "backblaze_storage": {
+      "bucket_total_bytes_with_versions_after_drill_upload": 27669300962,
+      "bucket_total_bytes_with_versions_after_s8_upload": 27669229089,
+      "bucket_total_objects_with_versions_after_drill_upload": 8633,
+      "bucket_total_objects_with_versions_after_s8_upload": 8573,
+      "measured_with": "rclone size bb:<bucket> --b2-versions",
+      "storage_rate_read_on": "2026-11-19",
+      "storage_rate_source": "https://www.backblaze.com/cloud-storage/pricing",
+      "storage_rate_usd_per_tb_month": 6.95
+    },
+    "drill_log_upload": {
+      "check_exit_status": 0,
+      "copy_exit_status": 0,
+      "matching_files": 60,
+      "note": "no log of this upload was retained; the object-lock observation of the prefix is retained and is in derived.retention",
+      "prefix": "s8-recovery-drill-20261122",
+      "rclone_check_differences": 0
+    },
+    "first_backblaze_restore_of_s8": {
+      "download_exit_status": "not captured",
+      "finished_utc": "2026-11-20T01:36:15Z",
+      "note": "superseded by derived.recovery_checks_20261120, whose s8-b2-download step records the exit status",
+      "restored_file_count": 147,
+      "verify_exit_status": 0
+    },
+    "note": "Values the operator saw on a terminal. No retained log holds them, so the generator cannot check them.",
+    "pre_run_check": {
+      "command": "PIXELGYM_RUN_V5_SANDBOX_TESTS=1 .venv/bin/python -m pytest tests/integration/test_s8_rehearsal_local.py -q",
+      "note": "throwaway qualification; not part of the counted campaign",
+      "result": "1 passed in 63.12s"
+    },
+    "recovery_checks_20261120_checkout_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+    "s8_upload": {
+      "check_exit_status": 0,
+      "copy_exit_status": 0,
+      "note": "the s8-20261119-main upload's copy.log and check.log hold rclone's output but not the exit statuses"
+    }
+  },
+  "owner_decisions": [
+    {
+      "date": "2026-11-19",
+      "decision": "approved a fresh S7 qualification at current main (77 fake sends, no spend)",
+      "id": 1,
+      "recorded_as": "given in chat; the approval text is retained in the private plan.json"
+    },
+    {
+      "date": "2026-11-19",
+      "decision": "signed the S8 approval document for the exact packages A and B and chose the real loopback listener on 127.0.0.1 for the rehearsal caller",
+      "id": 2,
+      "recorded_as": "the signed approval document is private and bound by approval_sha256; the listener choice was given in chat"
+    },
+    {
+      "date": "2026-11-20",
+      "decision": "amended the S7 proposal so that a Backblaze B2 copy replaces the private LFS copy as the recovery copy for runs from s7-20261119-main onward",
+      "id": 3,
+      "recorded_as": "given in chat; docs/s7-serving-demo-proposal.md#amendment-2026-11-20-backblaze-b2-replaces-the-private-lfs-copy; written after the 2026-11-20 restores ran"
+    },
+    {
+      "date": "2026-11-20",
+      "decision": "Object Lock retention on the Backblaze prefixes: not now",
+      "id": 4,
+      "recorded_as": "given in chat"
+    },
+    {
+      "date": "2026-11-22",
+      "decision": "the rollback-for-exhaustion gap will be closed by a narrow supplemental scenario: exhaust B, explicitly deploy A so that B stays an eligible rollback target, then request rollback, capturing B's candidate ID, the exhaustion error, the rollback_failed audit event, A's unchanged deployment ID, and B's unchanged attempt count, with activation smoke sends accounted separately",
+      "id": 5,
+      "recorded_as": "given in chat; the scenario has not been run and needs separate approval"
+    },
+    {
+      "date": "2026-11-22",
+      "decision": "the owner accepts the existing unit regressions as coverage for a live episode crossing a deployment change; this is an explicit exception to integrated evidence for that case",
+      "id": 6,
+      "recorded_as": "given in chat"
+    },
+    {
+      "date": "2026-11-22",
+      "decision": "build a generator with a check mode for this record now, and add sandbox-profile retention before the next rehearsal worker launch",
+      "id": 7,
+      "recorded_as": "given in chat"
+    }
+  ],
+  "review_findings": [
+    {
+      "finding": "recovery check not done as the proposal words it",
+      "id": 1,
+      "status": "addressed by restores from the local archive and Backblaze with exit statuses and by the owner's 2026-11-20 amendment naming Backblaze as the recovery copy; no private LFS restore; no Object Lock retention; verifier isolation not as specified"
+    },
+    {
+      "finding": "the observation labelled rollback_to_exhausted_B was refused by the rollback lineage rule (TransitionError, candidate_id null), not by an exhaustion check; exhaustion is shown only by redeploy_exhausted_B (StatefulLoadError)",
+      "id": 2,
+      "status": "confirmed in lifecycle.json; sealed evidence is unchanged. On 2026-11-22 the owner chose to close this with a narrow supplemental scenario (owner decision 5), which has not been run and needs separate approval"
+    },
+    {
+      "finding": "both 409 deployment_changed probes used episodes that had already ended; no live episode from an old deployment was refused in the rehearsal",
+      "id": 3,
+      "status": "confirmed; the live case rests on unit tests only (tests/unit/platform/test_stateful_control_plane.py). On 2026-11-22 the owner accepted those regressions as coverage, an explicit exception to integrated evidence for this case (owner decision 6)"
+    },
+    {
+      "finding": "acceptance-checks.json holds one command; regression-backed rows had no raw command at the rehearsal revision; record.json has no generator or test",
+      "id": 4,
+      "status": "partly addressed: regression and opt-in Darwin sandbox commands are recorded in acceptance-regression-steps.jsonl; record.json is now generated by scripts/build_s8_evidence_record.py with a --check mode and a unit test. The driver's own acceptance-checks.json still holds one command"
+    },
+    {
+      "finding": "sandbox enforcement is the launcher's own report; the five profile digests cannot be checked because no profile text is retained in the S8 state",
+      "id": 5,
+      "status": "confirmed; not fixable for this run. The five launcher digests survive and the profile bytes were never captured. The owner asked for profile retention before the next worker launch (owner decision 7)"
+    },
+    {
+      "finding": "pixelgym/platform/s8_rehearsal.py compares B's attempt count with a literal 24 in step 6 instead of the plan's cap",
+      "id": 6,
+      "status": "confirmed; not changed"
+    },
+    {
+      "finding": "approved_on in the approval document reads 11.19.26; the run state lives outside the repository because the driver refuses an in-checkout path while AGENTS.md section 7 asks for a git-ignored path inside it; the 2026-10-27 qualification (77 sends) was never used",
+      "id": 7,
+      "status": "confirmed; disclosed"
+    },
+    {
+      "finding": "the frozen S8 verifier reads the original S7 path from the sealed plan; an absent directory exits 0 with qualification_seal_verified null and a different valid qualification printed false and exited 0",
+      "id": 8,
+      "status": "confirmed; verify now takes --qualification and raises on absence or mismatch, plain verify raises on mismatch; drills repeated with originals and working checkout blocked, see recovery_drill_20261122"
+    },
+    {
+      "finding": "the run command exited 0 even when its acceptance subprocess exited nonzero",
+      "id": 9,
+      "status": "confirmed; run now exits nonzero in that case"
+    }
+  ],
+  "schema_version": "pixelgym-s8-operator-statements-v1"
+}

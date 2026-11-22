@@ -5,9 +5,14 @@ The S8 scripted serving rehearsal was executed once on 2026-11-20 (UTC) from rev
 and exit statuses of that run and of the S7 qualification it consumed. It declares no verdict:
 the owner grades S8.
 
-[`record.json`](record.json) is the structured record. The operator assembled it from the private
-stored evidence and command logs. The qualification and rehearsal content (reports, packages,
-gate observations, lifecycle observations) stays private and is not in this repository.
+[`record.json`](record.json) is the structured record.
+[`scripts/build_s8_evidence_record.py`](../../scripts/build_s8_evidence_record.py) generates it.
+Its `derived` block is computed from the private stored evidence and the retained command logs.
+Its `operator_statements` block is copied from
+[`operator-statements.json`](operator-statements.json), which holds what cannot be derived: owner
+decisions, review findings, limits, values seen only on a terminal, and fields that were never
+captured. The qualification and rehearsal content (reports, packages, gate observations,
+lifecycle observations) stays private and is not in this repository.
 
 ## What ran
 
@@ -73,9 +78,13 @@ code and the stored evidence. The sealed rehearsal state is unchanged.
    `TransitionError: there is no eligible known-good deployment to roll back to` and
    `candidate_id: null`. That is the rollback lineage rule, which would refuse the same way if B
    had capacity left. Exhaustion is shown only by `redeploy_exhausted_B` (`StatefulLoadError`,
-   smoke sends 5 to 6).
+   smoke sends 5 to 6). On 2026-11-22 the owner chose to close this with a narrow supplemental
+   scenario: exhaust B, explicitly deploy A so that B stays an eligible rollback target, then
+   request rollback. That scenario has not been run and needs separate approval.
 3. **No live episode from an old deployment was refused.** Both `409 deployment_changed` probes
-   used episodes that had already ended. The live case rests on unit tests only.
+   used episodes that had already ended. The live case rests on unit tests only. On 2026-11-22
+   the owner accepted those regressions as coverage. This is an explicit exception to integrated
+   evidence for that case.
 4. **The driver's acceptance record holds one command**, the stored-verification replay. The
    regression-backed rows had no raw command at the rehearsal revision.
    [`acceptance-regression-steps.jsonl`](acceptance-regression-steps.jsonl) now records three
@@ -84,7 +93,8 @@ code and the stored evidence. The sealed rehearsal state is unchanged.
    the skipped two need the Claude CLI). These are regression runs, not graded checks.
 5. **Sandbox enforcement is the launcher's own report.** The five worker proofs give a mechanism
    and five different profile digests. No profile text is retained in the S8 state, so the digests
-   cannot be checked against content.
+   cannot be checked against content. The owner asked for the driver to retain profile bytes
+   before the next worker launch; that does not change this run.
 6. **Step 6 of the driver compares B's attempt count with a literal 24** instead of the plan's
    cap. The code is unchanged here.
 
@@ -133,7 +143,15 @@ The owner grades whether this meets the recovery check.
 ## Limits
 
 - The owner has not graded S8.
-- `record.json` is assembled by the operator. No generator script or test binds it.
+- `record.json` is generated, not typed. With the private inputs present,
+  `python -m scripts.build_s8_evidence_record --check` rebuilds it and exits nonzero when it
+  differs from the checked-in file. A reviewer without the private inputs cannot recompute the
+  `derived` block. That reviewer can read the operator statements, check that the step files
+  beside the record match the digests it lists, and run the generator's unit test, which uses a
+  synthetic input tree.
+- The operator statements rest on what the operator typed. They include values seen only on a
+  terminal, such as the bucket totals and the exit statuses of the S8 upload. The file lists each
+  field that was never captured.
 - The audit actor is a string recorded as `legacy_unverified`, not an authenticated identity. The
   approval digest is the only authority. The actor string is withheld from this public record.
 - `approved_on` in the approval document reads `11.19.26`.

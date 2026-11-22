@@ -1,389 +1,610 @@
 {
-  "acceptance_regression": {
-    "note": "run after the rehearsal at the rehearsal revision; the two skipped tests need PIXELGYM_RUN_V5_CLI_SANDBOX_TESTS=1 and the Claude CLI and were not run; the driver's own acceptance-checks.json holds only the stored_verification_replay command",
-    "steps": [
-      {
-        "command": ".venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/platform/test_stateful_contracts.py tests/unit/platform/test_serving_episode_host.py tests/unit/platform/test_stateful_service.py tests/unit/platform/test_policy_subprocess.py tests/unit/platform/test_stateful_control_plane.py tests/unit/platform/test_serving_journal_sequence.py",
-        "exit_status": 0,
-        "finished_utc": "2026-11-20T22:12:55Z",
-        "name": "unit-serving-stack",
-        "revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
-        "started_utc": "2026-11-20T22:12:35Z",
-        "summary_line": "130 passed, 4 warnings in 18.57s"
-      },
-      {
-        "command": ".venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/platform/test_s7_serving.py tests/unit/platform/test_s7_review_boundaries.py tests/unit/platform/test_s8_rehearsal.py",
-        "exit_status": 0,
-        "finished_utc": "2026-11-20T22:14:37Z",
-        "name": "unit-s7-s8",
-        "revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
-        "started_utc": "2026-11-20T22:12:55Z",
-        "summary_line": "133 passed in 101.62s (0:01:41)"
-      },
-      {
-        "command": "env PIXELGYM_RUN_V5_SANDBOX_TESTS=1 .venv/bin/python -m pytest -q -p no:cacheprovider -rs tests/integration/test_stateful_serving_sandbox.py tests/integration/test_grounding_v5_sandbox.py tests/integration/test_grounding_v5_cli_sandbox.py tests/integration/test_s8_rehearsal_local.py",
-        "exit_status": 0,
-        "finished_utc": "2026-11-20T22:15:49Z",
-        "name": "darwin-sandbox-integration",
-        "revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
-        "started_utc": "2026-11-20T22:14:38Z",
-        "summary_line": "4 passed, 2 skipped in 71.21s (0:01:11)"
-      }
-    ],
-    "steps_file": "acceptance-regression-steps.jsonl"
-  },
-  "evidence_label": "credential-free-scripted-engineering-validation",
-  "gate_policy_sha256": "1058e81e30aab88fada7de193ae0a6b6131f713fa55b8f5e21f81ed32c00c7c6",
-  "limitations": [
-    "the owner has not graded S8; this record declares no verdict",
-    "the audit actor is a string, not authenticated human identity; the approval digest is the recorded authority",
-    "real-provider requests and spending are declared constants of the fixture-only boundary, not independent network or billing measurements",
-    "the s7-20261027-s8driver qualification has a local archive only; a copy is nested in the s7-20261119-main archive as a predecessor",
-    "no Object Lock retention is set on the uploaded files, and no private LFS copy was made",
-    "qualify, verify, and report exit statuses for s7-20261027-s8driver were partly not captured in its own logs; that run was not used for this rehearsal",
-    "worker sandbox proofs are self-reported by the launcher and their profile text was not retained",
-    "the rollback-to-B probe shows the lineage rule, not exhaustion; stale-deployment refusals were observed only for ended episodes",
-    "the recovery check follows the 2026-11-20 amendment (Backblaze), which was written after the restores ran; the verifier was not run in an isolated interpreter"
-  ],
-  "milestone_verdict": null,
-  "note": "Assembled by the operator from private stored evidence and command logs. Qualification and rehearsal content stays private; this record holds digests, counts, commands, and exit statuses only. The owner grades S8.",
-  "qualification": {
-    "campaign_allowance": 415,
-    "commands": [
-      {
-        "command": ".venv/bin/python -m scripts.s7_serving prepare --run <run>/qualification --run-id s7-20261119-main --approval <text> --expected-predecessor-sends 304 --predecessor-archive <five archives>",
-        "exit_status": 0,
-        "fake_sends": 0,
-        "finished_utc": "2026-11-20T00:27:55Z",
-        "started_utc": "2026-11-20T00:27:23Z"
-      },
-      {
-        "command": ".venv/bin/python -m scripts.s7_serving qualify --run <run>/qualification",
-        "exit_status": 0,
-        "finished_utc": "2026-11-20T00:29:38Z",
-        "started_utc": "2026-11-20T00:28:04Z",
-        "stderr_bytes": 0
-      },
-      {
-        "command": ".venv/bin/python -m scripts.s7_serving verify --run <run>/qualification",
-        "exit_status": 0,
-        "finished_utc": "2026-11-20T00:30:40Z",
-        "started_utc": "2026-11-20T00:29:51Z"
-      },
-      {
-        "command": ".venv/bin/python -m scripts.s7_serving report --run <run>/qualification",
-        "exit_status": 0,
-        "report_lines": 65,
-        "stderr_bytes": 0
-      }
-    ],
-    "ledger_sends": {
-      "qualification": 77
-    },
-    "owner_approval": "in chat on 2026-11-19; the approval text is retained in the private plan.json",
-    "packages": {
-      "A": {
-        "gate_report_sha256": "sha256:3e0aafa231d3110e6909a20a5a74c9f9c41226ac7e98686eabba30d0253d4c51",
-        "package_sha256": "sha256:90451b0c1f766b3fd2cc7006573e755964e7e47dce9716df2ca14adeef9b2ded",
-        "policy_id": "sha256:4b54be398eae9cb52b7eaa2b539ded8165f9a62474bc2ae5c0d59eda45ee2e94",
-        "stored_gate_overall_passed": true
-      },
-      "B": {
-        "gate_report_sha256": "sha256:ec1293f21a750cf1b43542a1d668e608e0d68ce621c89e4b4ac9fde4e16bd711",
-        "package_sha256": "sha256:226936d19f720b114bcf137ef23a090bf64fff18e11dfae42215578048357660",
-        "policy_id": "sha256:c10c6c1d29e595b1b1ab4ef8012c03568d7b1b68fc5d50278ac34d47402bb798",
-        "stored_gate_overall_passed": true
-      }
-    },
-    "plan_sha256": "sha256:9d3444dad11dcb150340009831dedb9c9d52036f35c300101ff090f921d29a2c",
-    "predecessor_qualification_sends": [
-      0,
-      73,
-      77,
-      77,
-      77
-    ],
-    "previous_qualification_sends": 304,
-    "qualification_allowance": 381,
-    "report_sha256": "sha256:b5d9bef64c1a38ec717ecb06834c939ca39d047c9d3b06a402a76d52e6faa7fa",
-    "run_id": "s7-20261119-main",
-    "seal_sha256": "sha256:ac3f78a8e926a9088369ed6b561d38c236adfd31d23e678e07b84bff4228105e",
-    "source_binding_sha256": "sha256:9c42055b2909785e26152991bf63e39f547dd7af7dc64b80f99512dbe54afee6",
-    "verification_sha256": "sha256:bbb678695b71981a27c6e651d341a2bd5e9bc32c7f4afe8457c5ba196af7250f"
-  },
-  "recovery_checks": {
-    "checkout_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
-    "limits": [
-      "each restored S8 state still names the original qualification directory in its plan, so its verify reads the original qualification, not a restored one",
-      "restores ran on the same host and checkout as the rehearsal",
-      "the earlier 2026-11-20T01:36Z Backblaze restore did not capture the download exit status; the s8-b2-download step here does",
-      "the verifier ran from the working checkout at the bound revision, not in an isolated credential-free interpreter against the bundle's source snapshot"
-    ],
-    "nonzero_exit_statuses": [],
-    "proposal_amendment": {
-      "decided_by": "owner, in chat",
-      "decided_on": "2026-11-20",
-      "recorded_after_the_restores": true,
-      "section": "docs/s7-serving-demo-proposal.md#amendment-2026-11-20-backblaze-b2-replaces-the-private-lfs-copy"
-    },
-    "report_sha256": {
-      "note": "first 16 hex characters of the SHA-256 of each rendered report",
-      "s7_backblaze_restore": "f911d7647db483ed",
-      "s7_local_restore": "f911d7647db483ed",
-      "s7_original": "f911d7647db483ed",
-      "s8_backblaze_restore": "d3a1d99b28cea8fd",
-      "s8_local_restore": "d3a1d99b28cea8fd",
-      "s8_original": "d3a1d99b28cea8fd"
-    },
-    "run_on_utc": "2026-11-20",
-    "status_against_proposal": "the S7 proposal as first written requires a fresh-cache private LFS restore, which was not made; the owner amended the proposal on 2026-11-20 to make a Backblaze B2 restore the recovery copy; the recorded steps follow the amended check except that the verifier ran from the working checkout rather than an isolated interpreter against the bundled source; the owner grades whether the check is met",
-    "step_count": 14,
-    "steps_file": "recovery-check-steps.jsonl",
-    "verify_digests_match_original": true
-  },
-  "recovery_drill_20261122": {
-    "b2": {
-      "exit_statuses": {
-        "control-original-s7-blocked": 1,
-        "control-original-s8-blocked": 1,
-        "control-working-checkout-blocked": 1,
-        "download-s7": 0,
-        "download-s8": 0,
-        "negative-absent-qualification": 1,
-        "negative-different-qualification": 1,
-        "observe-plain-verify-without-qualification": 1,
-        "restore-s7": 0,
-        "restore-s8": 0,
-        "s7-bundle-verify": 0,
-        "s8-recovery-verify": 0,
-        "s8-report": 0
-      },
-      "expected_nonzero_all_nonzero": true,
-      "expected_zero_all_zero": true,
-      "step_count": 13,
-      "steps_file": "recovery-drill-20261122/b2-steps.jsonl"
-    },
-    "campaign_sends": 0,
-    "code_location": "a separate clone outside the working checkout",
-    "code_revision": "aa12bfa9c1f1aec64e08a5d2f85134009971d423",
-    "isolation": {
-      "controls": "ls of the original S8 state, the original S7 qualification, and the working checkout's scripts directory each exited nonzero inside the sandbox",
-      "denied_in_b2_drill_also": [
-        "evidence/archives (local archives)"
-      ],
-      "denied_in_both": [
-        "the working checkout",
-        "evidence/runs (original S7 and S8 run directories)",
-        "evidence/restores (earlier restores)",
-        "evidence-backup"
-      ],
-      "mechanism": "sandbox-exec, allow-default profile with a deny list for file-read* and file-write*",
-      "sandbox_profile_sha256": {
-        "b2": "6225963f7b1aa89dd9ebcf72521ae8668202ce94a1ecf5d041f5bf77f41f0cb7",
-        "local": "be50034ea5899bbcc3f35cbef3a51f9899deefc7f598e67e0465371db4281af4"
-      }
-    },
-    "limits": [
-      "same host as the rehearsal",
-      "the Backblaze downloads ran outside the sandbox and read credentials from the working checkout's .env",
-      "the clone was taken from the working checkout's Git repository and the virtualenv packages were copied from the working virtualenv before the sandboxed steps",
-      "the sandbox profile is allow-default with a deny list, not deny-default",
-      "the S8 verifier is the amended command at the code revision above, not the verifier frozen at the rehearsal revision; the S7 verifier is the bundle's own frozen code",
-      "the drill script and sandbox profiles contain local paths and are retained privately, with digests in the raw output"
-    ],
-    "local": {
-      "exit_statuses": {
-        "control-original-s7-blocked": 1,
-        "control-original-s8-blocked": 1,
-        "control-working-checkout-blocked": 1,
-        "negative-absent-qualification": 1,
-        "negative-different-qualification": 1,
-        "observe-plain-verify-without-qualification": 1,
-        "restore-s7": 0,
-        "restore-s8": 0,
-        "s7-bundle-verify": 0,
-        "s8-recovery-verify": 0,
-        "s8-report": 0
-      },
-      "expected_nonzero_all_nonzero": true,
-      "expected_zero_all_zero": true,
-      "step_count": 11,
-      "steps_file": "recovery-drill-20261122/local-steps.jsonl"
-    },
-    "negative_controls": {
-      "absent_qualification": "nonzero: the S7 qualification directory given for recovery is absent",
-      "different_internally_valid_qualification": "nonzero: the S7 qualification seal differs from the digest in the S8 plan (the nested 2026-10-27 predecessor qualification was passed)",
-      "plain_verify_without_qualification": "observed nonzero: PermissionError reading the original path recorded in the S8 plan"
-    },
-    "outputs_identical_across_drills": true,
-    "purpose": "repeat the local-archive and Backblaze restores with the original run directories and the working checkout inaccessible, and require the restored S7 qualification explicitly",
-    "python_environment": "a new virtualenv on the same Homebrew Python 3.12.16, with site-packages copied from the working virtualenv except torch, sympy, mpmath and the editable pixelgym link",
-    "raw_output": {
-      "backblaze_bytes": 71873,
-      "backblaze_files": 60,
-      "backblaze_prefix": "s8-recovery-drill-20261122",
-      "bucket_total_bytes_with_versions": 27669300962,
-      "check_exit_status": 0,
-      "copy_exit_status": 0,
-      "each_step_records": "stdout_sha256 and stderr_sha256 in the steps files",
-      "estimated_monthly_charge_usd": 0.19,
-      "location": "private; stdout and stderr of every step, the drill script and both sandbox profiles",
-      "rclone_check_differences": 0,
-      "storage_rate_read_on": "2026-11-19",
-      "storage_rate_usd_per_tb_month": 6.95
-    },
-    "s7_verifier": {
-      "file": "recovery-drill-20261122/verify_s7_bundle.py.txt",
-      "how": "env -i, python -I -B; imports pixelgym and scripts only from the restored bundle's own source snapshot after checking it against source-binding.json",
-      "output": {
-        "activation_performed": false,
-        "archived_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
-        "fake_sends": {
-          "qualification": 77
+  "derived": {
+    "acceptance_regression": {
+      "steps": [
+        {
+          "command": ".venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/platform/test_stateful_contracts.py tests/unit/platform/test_serving_episode_host.py tests/unit/platform/test_stateful_service.py tests/unit/platform/test_policy_subprocess.py tests/unit/platform/test_stateful_control_plane.py tests/unit/platform/test_serving_journal_sequence.py",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:12:55Z",
+          "name": "unit-serving-stack",
+          "revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "started_utc": "2026-11-20T22:12:35Z",
+          "summary_line": "130 passed, 4 warnings in 18.57s"
         },
-        "imports_resolved_under_bundle_source": true,
-        "inspection_unchanged": true,
-        "publication_performed": false,
-        "real_provider_requests": 0,
-        "rendered_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
-        "report_sha256": "sha256:b5d9bef64c1a38ec717ecb06834c939ca39d047c9d3b06a402a76d52e6faa7fa",
-        "seal_sha256": "sha256:ac3f78a8e926a9088369ed6b561d38c236adfd31d23e678e07b84bff4228105e",
-        "source_binding_sha256": "sha256:9c42055b2909785e26152991bf63e39f547dd7af7dc64b80f99512dbe54afee6",
-        "source_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
-        "verification_sha256": "sha256:bbb678695b71981a27c6e651d341a2bd5e9bc32c7f4afe8457c5ba196af7250f"
-      },
-      "sha256": "337b7b1fb8dc4d0d6bd1ed8c90a27ccfe8d0efccd779221698d00864e441e05a"
-    },
-    "s8_verifier": {
-      "command": "scripts.s8_rehearsal verify --state <restored S8 state> --qualification <restored S7 qualification>",
-      "output": {
-        "campaign_total": 109,
-        "fake_sends": {
-          "A": 2,
-          "B": 24,
-          "qualification": 77,
-          "smoke": 6
+        {
+          "command": ".venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/platform/test_s7_serving.py tests/unit/platform/test_s7_review_boundaries.py tests/unit/platform/test_s8_rehearsal.py",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:14:37Z",
+          "name": "unit-s7-s8",
+          "revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "started_utc": "2026-11-20T22:12:55Z",
+          "summary_line": "133 passed in 101.62s (0:01:41)"
         },
-        "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
-        "milestone_verdict": null,
-        "publication_performed": false,
-        "qualification_seal_verified": true,
-        "real_provider_requests": 0,
-        "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683"
-      },
-      "report_sha256_rendered_and_archived": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1"
-    }
-  },
-  "rehearsal": {
-    "approval": {
-      "activation_approved": true,
-      "actor": "owner-supplied string, withheld from this public record",
-      "actor_verification_source": "legacy_unverified",
-      "publication_approved": false
+        {
+          "command": "env PIXELGYM_RUN_V5_SANDBOX_TESTS=1 .venv/bin/python -m pytest -q -p no:cacheprovider -rs tests/integration/test_stateful_serving_sandbox.py tests/integration/test_grounding_v5_sandbox.py tests/integration/test_grounding_v5_cli_sandbox.py tests/integration/test_s8_rehearsal_local.py",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:15:49Z",
+          "name": "darwin-sandbox-integration",
+          "revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "started_utc": "2026-11-20T22:14:38Z",
+          "summary_line": "4 passed, 2 skipped in 71.21s (0:01:11)"
+        }
+      ]
     },
-    "approval_sha256": "sha256:a58a83f4690be913f037f200938b5364c337af95410ffb8d13e5d57001c45c3b",
-    "caller_transport": "loopback-listener:127.0.0.1:8765",
-    "campaign_cap": 111,
-    "campaign_total": 109,
-    "commands": [
-      {
-        "command": ".venv/bin/python -m scripts.s8_rehearsal prepare --qualification <qualification> --state <state> --approval <signed approval>",
-        "exit_status": 0,
-        "fake_sends": 0,
-        "finished_utc": "2026-11-20T01:11:48Z",
-        "started_utc": "2026-11-20T01:11:08Z",
-        "stderr_bytes": 0
+    "checked_in_copies": {
+      "acceptance-regression-steps.jsonl": {
+        "equals_private_source": true,
+        "sha256": "5c47c98cc39b58f05fd9518f04aaf40149cb7f840262e8cea6da391e16f4142b"
       },
-      {
-        "acceptance_exit_statuses": {
-          "stored_verification_replay": 0
+      "recovery-check-steps.jsonl": {
+        "equals_private_source": true,
+        "sha256": "6afbf518ab221b01e165d5b8cfb00b7fc0324dacf033d7c90dbbb77e5229c6b7"
+      },
+      "recovery-drill-20261122/b2-steps.jsonl": {
+        "equals_private_source": true,
+        "sha256": "1fec5c4db56035a7bc8ddee28cb2358e0d0c54d2a64e25ef360409c26e5b03f2"
+      },
+      "recovery-drill-20261122/local-steps.jsonl": {
+        "equals_private_source": true,
+        "sha256": "41a7b07e5b55a6a036da15ad3a0e2d7c375da4603ff9160a1d809d5825eedd7e"
+      },
+      "recovery-drill-20261122/verify_s7_bundle.py.txt": {
+        "equals_private_source": true,
+        "sha256": "337b7b1fb8dc4d0d6bd1ed8c90a27ccfe8d0efccd779221698d00864e441e05a"
+      }
+    },
+    "qualification": {
+      "activation_performed": false,
+      "campaign_allowance": 415,
+      "commands": [
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving prepare --run ~/.local/state/pixelgym/evidence/runs/s7-20261119-main/qualification --run-id s7-20261119-main --approval <text in plan.json> --expected-predecessor-sends 304 --predecessor-archive <v1-stopped,v2-stopped,v3,20261026-successor,20261027-s8driver>",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T00:27:55Z",
+          "git_status_entries": 0,
+          "log": "prepare-command.log",
+          "output": {
+            "fake_sends": 0,
+            "plan_sha256": "sha256:9d3444dad11dcb150340009831dedb9c9d52036f35c300101ff090f921d29a2c"
+          },
+          "source_head": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "started_utc": "2026-11-20T00:27:23Z",
+          "stderr_bytes": 0
         },
-        "command": ".venv/bin/python -m scripts.s8_rehearsal run --state <state> --listener-port 8765",
-        "exit_status": 0,
-        "finished_utc": "2026-11-20T01:18:00Z",
-        "started_utc": "2026-11-20T01:11:54Z",
-        "stderr_bytes": 0
-      },
-      {
-        "command": ".venv/bin/python -m scripts.s8_rehearsal verify --state <state>",
-        "exit_status": 0,
-        "finished_utc": "2026-11-20T01:18:20Z",
-        "started_utc": "2026-11-20T01:18:05Z"
-      },
-      {
-        "command": ".venv/bin/python -m scripts.s8_rehearsal report --state <state>",
-        "exit_status": 0,
-        "report_lines": 429,
-        "stderr_bytes": 0
-      }
-    ],
-    "failure_record_present": false,
-    "ledger_sends": {
-      "A": 2,
-      "B": 24,
-      "qualification": 77,
-      "smoke": 6
-    },
-    "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
-    "plan_sha256": "sha256:074d6acc5a81a4d332032886982f0502612110d9a015617e7da13bcf0554ae7a",
-    "pre_run_check": {
-      "command": "PIXELGYM_RUN_V5_SANDBOX_TESTS=1 .venv/bin/python -m pytest tests/integration/test_s8_rehearsal_local.py -q",
-      "note": "throwaway qualification; not part of the counted campaign",
-      "result": "1 passed in 63.12s"
-    },
-    "publication_performed": false,
-    "real_provider_requests": 0,
-    "run_id": "s8-20261119-main",
-    "seal_sha256": "sha256:004ad599eabc4d5820de0657f8ab68578086b136bd5d77cc0568d31909bab644",
-    "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683",
-    "worker_os_sandbox_required": true,
-    "worker_proofs": [
-      {
-        "event": "deploy A",
-        "mechanism": "darwin_sandbox_exec",
-        "os_sandbox_applied": true,
-        "profile_sha256": "sha256:807fd73f2d52b50bbf984a354c31866f04c90e04c704841f9571dcadd14ab965"
-      },
-      {
-        "event": "deploy B",
-        "mechanism": "darwin_sandbox_exec",
-        "os_sandbox_applied": true,
-        "profile_sha256": "sha256:617be8f27d4168a6b1126bbc55e4e4c9795a9fa773f41bab788556ffb3a41f56"
-      },
-      {
-        "event": "restore_active B",
-        "mechanism": "darwin_sandbox_exec",
-        "os_sandbox_applied": true,
-        "profile_sha256": "sha256:27df3c0ca0a1fc8f908a5ea5d5ef5babad67780836ee8132b4be7ab86958e5ce"
-      },
-      {
-        "event": "deploy B",
-        "mechanism": "darwin_sandbox_exec",
-        "os_sandbox_applied": true,
-        "profile_sha256": "sha256:b32af6fa1317ccd9d854768980896d8a958c60c080f36c7748f96dd51d69919a"
-      },
-      {
-        "event": "rollback A",
-        "mechanism": "darwin_sandbox_exec",
-        "os_sandbox_applied": true,
-        "profile_sha256": "sha256:ed9432b703aa4b8f10a46102605571ee32c1cc074832263a00a8a67f6f895577"
-      }
-    ]
-  },
-  "retention": {
-    "backblaze": {
-      "bucket_total_bytes_with_versions": 27669229089,
-      "bucket_total_objects_with_versions": 8573,
-      "bucket_type": "allPrivate",
-      "default_retention": null,
-      "estimated_monthly_charge_usd": 0.19,
-      "file_retention_modes_observed": [
-        null
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving qualify --run ~/.local/state/pixelgym/evidence/runs/s7-20261119-main/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T00:29:38Z",
+          "log": "qualify-command.log",
+          "source_head": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "started_utc": "2026-11-20T00:28:04Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving verify --run ~/.local/state/pixelgym/evidence/runs/s7-20261119-main/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T00:30:40Z",
+          "log": "verify-command.log",
+          "output": {
+            "activation_performed": false,
+            "fake_sends": {
+              "qualification": 77
+            },
+            "publication_performed": false,
+            "real_provider_requests": 0,
+            "report_sha256": "sha256:b5d9bef64c1a38ec717ecb06834c939ca39d047c9d3b06a402a76d52e6faa7fa",
+            "verification_sha256": "sha256:bbb678695b71981a27c6e651d341a2bd5e9bc32c7f4afe8457c5ba196af7250f"
+          },
+          "started_utc": "2026-11-20T00:29:51Z"
+        },
+        {
+          "exit_status": 0,
+          "log": "report-command.log",
+          "output_lines": 65,
+          "stderr_bytes": 0
+        }
       ],
-      "object_lock_enabled": true,
-      "prefixes": {
+      "gate_policy_sha256": "1058e81e30aab88fada7de193ae0a6b6131f713fa55b8f5e21f81ed32c00c7c6",
+      "ledger_sends": {
+        "qualification": 77
+      },
+      "packages": {
+        "A": {
+          "gate_report_sha256": "sha256:3e0aafa231d3110e6909a20a5a74c9f9c41226ac7e98686eabba30d0253d4c51",
+          "package_sha256": "sha256:90451b0c1f766b3fd2cc7006573e755964e7e47dce9716df2ca14adeef9b2ded",
+          "policy_id": "sha256:4b54be398eae9cb52b7eaa2b539ded8165f9a62474bc2ae5c0d59eda45ee2e94",
+          "stored_gate_overall_passed": true
+        },
+        "B": {
+          "gate_report_sha256": "sha256:ec1293f21a750cf1b43542a1d668e608e0d68ce621c89e4b4ac9fde4e16bd711",
+          "package_sha256": "sha256:226936d19f720b114bcf137ef23a090bf64fff18e11dfae42215578048357660",
+          "policy_id": "sha256:c10c6c1d29e595b1b1ab4ef8012c03568d7b1b68fc5d50278ac34d47402bb798",
+          "stored_gate_overall_passed": true
+        }
+      },
+      "plan_sha256": "sha256:9d3444dad11dcb150340009831dedb9c9d52036f35c300101ff090f921d29a2c",
+      "predecessor_qualification_sends": [
+        0,
+        73,
+        77,
+        77,
+        77
+      ],
+      "previous_qualification_sends": 304,
+      "publication_performed": false,
+      "qualification_allowance": 381,
+      "real_provider_requests": 0,
+      "rendered_report_file_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+      "report_sha256": "sha256:b5d9bef64c1a38ec717ecb06834c939ca39d047c9d3b06a402a76d52e6faa7fa",
+      "run_id": "s7-20261119-main",
+      "runtime": {
+        "distribution_count": 450,
+        "python": "3.12.16",
+        "runtime_lock_sha256": "sha256:beb1ef0aab488045e3f11b81bee58b3037cde3617728eb83b6248d8c445a6edd"
+      },
+      "seal_sha256": "sha256:ac3f78a8e926a9088369ed6b561d38c236adfd31d23e678e07b84bff4228105e",
+      "source_binding_sha256": "sha256:9c42055b2909785e26152991bf63e39f547dd7af7dc64b80f99512dbe54afee6",
+      "source_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+      "verification_sha256": "sha256:bbb678695b71981a27c6e651d341a2bd5e9bc32c7f4afe8457c5ba196af7250f"
+    },
+    "recovery_checks_20261120": {
+      "nonzero_exit_statuses": [],
+      "rendered_report_sha256": {
+        "s7_backblaze_restore": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+        "s7_local_restore": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+        "s7_original": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+        "s8_backblaze_restore": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1",
+        "s8_local_restore": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1",
+        "s8_original": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1"
+      },
+      "restored_reports_equal_originals": true,
+      "step_count": 14,
+      "steps": [
+        {
+          "command": "restore ~/.local/state/pixelgym/evidence/archives/s8-20261119-main ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-local-20261120T221227Z/run sha256:c59dc0de15b2183fe015d66893b257a70bc64b7a11ee93976755d7050f830b1f",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:12:27Z",
+          "name": "s8-local-restore",
+          "started_utc": "2026-11-20T22:12:27Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal verify --state ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-local-20261120T221227Z/run/state",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:12:41Z",
+          "name": "s8-local-verify",
+          "started_utc": "2026-11-20T22:12:27Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal report --state ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-local-20261120T221227Z/run/state",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:12:42Z",
+          "name": "s8-local-report",
+          "started_utc": "2026-11-20T22:12:41Z"
+        },
+        {
+          "command": "rclone copy bb:<bucket>/s8-20261119-main ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-b2-20261120T221227Z/archive --checksum",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:12:53Z",
+          "name": "s8-b2-download",
+          "started_utc": "2026-11-20T22:12:42Z"
+        },
+        {
+          "command": "restore ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-b2-20261120T221227Z/archive ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-b2-20261120T221227Z/run sha256:c59dc0de15b2183fe015d66893b257a70bc64b7a11ee93976755d7050f830b1f",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:12:54Z",
+          "name": "s8-b2-restore",
+          "started_utc": "2026-11-20T22:12:53Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal verify --state ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-b2-20261120T221227Z/run/state",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:13:07Z",
+          "name": "s8-b2-verify",
+          "started_utc": "2026-11-20T22:12:54Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal report --state ~/.local/state/pixelgym/evidence/restores/s8-20261119-main-b2-20261120T221227Z/run/state",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:13:08Z",
+          "name": "s8-b2-report",
+          "started_utc": "2026-11-20T22:13:07Z"
+        },
+        {
+          "command": "restore ~/.local/state/pixelgym/evidence/archives/s7-20261119-main ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-local-20261120T221227Z/run sha256:26c047116fe4fc57a6af28787534cad4ab8c5da2447dfa5185ca8da67903d5ce",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:13:17Z",
+          "name": "s7-local-restore",
+          "started_utc": "2026-11-20T22:13:08Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving verify --run ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-local-20261120T221227Z/run/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:14:03Z",
+          "name": "s7-local-verify",
+          "started_utc": "2026-11-20T22:13:17Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving report --run ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-local-20261120T221227Z/run/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:14:15Z",
+          "name": "s7-local-report",
+          "started_utc": "2026-11-20T22:14:03Z"
+        },
+        {
+          "command": "rclone copy bb:<bucket>/s7-20261119-main ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-b2-20261120T221227Z/archive --checksum --transfers 32",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:15:48Z",
+          "name": "s7-b2-download",
+          "started_utc": "2026-11-20T22:14:15Z"
+        },
+        {
+          "command": "restore ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-b2-20261120T221227Z/archive ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-b2-20261120T221227Z/run sha256:26c047116fe4fc57a6af28787534cad4ab8c5da2447dfa5185ca8da67903d5ce",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:15:57Z",
+          "name": "s7-b2-restore",
+          "started_utc": "2026-11-20T22:15:48Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving verify --run ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-b2-20261120T221227Z/run/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:16:44Z",
+          "name": "s7-b2-verify",
+          "started_utc": "2026-11-20T22:15:57Z"
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving report --run ~/.local/state/pixelgym/evidence/restores/s7-20261119-main-b2-20261120T221227Z/run/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T22:16:56Z",
+          "name": "s7-b2-report",
+          "started_utc": "2026-11-20T22:16:44Z"
+        }
+      ],
+      "verify_digests_match_original": true
+    },
+    "recovery_drill_20261122": {
+      "b2": {
+        "exit_statuses": {
+          "control-original-s7-blocked": 1,
+          "control-original-s8-blocked": 1,
+          "control-working-checkout-blocked": 1,
+          "download-s7": 0,
+          "download-s8": 0,
+          "negative-absent-qualification": 1,
+          "negative-different-qualification": 1,
+          "observe-plain-verify-without-qualification": 1,
+          "restore-s7": 0,
+          "restore-s8": 0,
+          "s7-bundle-verify": 0,
+          "s8-recovery-verify": 0,
+          "s8-report": 0
+        },
+        "expected_nonzero_all_nonzero": true,
+        "expected_zero_all_zero": true,
+        "s7_verifier_output": {
+          "activation_performed": false,
+          "archived_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+          "fake_sends": {
+            "qualification": 77
+          },
+          "imports_resolved_under_bundle_source": true,
+          "inspection_unchanged": true,
+          "publication_performed": false,
+          "real_provider_requests": 0,
+          "rendered_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+          "report_sha256": "sha256:b5d9bef64c1a38ec717ecb06834c939ca39d047c9d3b06a402a76d52e6faa7fa",
+          "seal_sha256": "sha256:ac3f78a8e926a9088369ed6b561d38c236adfd31d23e678e07b84bff4228105e",
+          "source_binding_sha256": "sha256:9c42055b2909785e26152991bf63e39f547dd7af7dc64b80f99512dbe54afee6",
+          "source_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "verification_sha256": "sha256:bbb678695b71981a27c6e651d341a2bd5e9bc32c7f4afe8457c5ba196af7250f"
+        },
+        "s8_report_sha256_archived_copy": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1",
+        "s8_report_sha256_rendered": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1",
+        "s8_verifier_output": {
+          "campaign_total": 109,
+          "fake_sends": {
+            "A": 2,
+            "B": 24,
+            "qualification": 77,
+            "smoke": 6
+          },
+          "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
+          "milestone_verdict": null,
+          "publication_performed": false,
+          "qualification_seal_verified": true,
+          "real_provider_requests": 0,
+          "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683"
+        },
+        "sandbox_profile_sha256": "6225963f7b1aa89dd9ebcf72521ae8668202ce94a1ecf5d041f5bf77f41f0cb7",
+        "sandboxed_steps": 11,
+        "stderr_last_line": {
+          "negative-absent-qualification": "ValueError: the S7 qualification directory given for recovery is absent",
+          "negative-different-qualification": "ValueError: the S7 qualification seal differs from the digest in the S8 plan",
+          "observe-plain-verify-without-qualification": "PermissionError: [Errno 1] Operation not permitted: '~/.local/state/pixelgym/evidence/runs/s7-20261119-main/qualification'"
+        },
+        "step_count": 13
+      },
+      "code_revision": "aa12bfa9c1f1aec64e08a5d2f85134009971d423",
+      "drill_script_sha256": "efc89cf3a9eddd4f0b64d94724f0a0579e4a4c9fa8825ba4de62de04903e734b",
+      "local": {
+        "exit_statuses": {
+          "control-original-s7-blocked": 1,
+          "control-original-s8-blocked": 1,
+          "control-working-checkout-blocked": 1,
+          "negative-absent-qualification": 1,
+          "negative-different-qualification": 1,
+          "observe-plain-verify-without-qualification": 1,
+          "restore-s7": 0,
+          "restore-s8": 0,
+          "s7-bundle-verify": 0,
+          "s8-recovery-verify": 0,
+          "s8-report": 0
+        },
+        "expected_nonzero_all_nonzero": true,
+        "expected_zero_all_zero": true,
+        "s7_verifier_output": {
+          "activation_performed": false,
+          "archived_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+          "fake_sends": {
+            "qualification": 77
+          },
+          "imports_resolved_under_bundle_source": true,
+          "inspection_unchanged": true,
+          "publication_performed": false,
+          "real_provider_requests": 0,
+          "rendered_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+          "report_sha256": "sha256:b5d9bef64c1a38ec717ecb06834c939ca39d047c9d3b06a402a76d52e6faa7fa",
+          "seal_sha256": "sha256:ac3f78a8e926a9088369ed6b561d38c236adfd31d23e678e07b84bff4228105e",
+          "source_binding_sha256": "sha256:9c42055b2909785e26152991bf63e39f547dd7af7dc64b80f99512dbe54afee6",
+          "source_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "verification_sha256": "sha256:bbb678695b71981a27c6e651d341a2bd5e9bc32c7f4afe8457c5ba196af7250f"
+        },
+        "s8_report_sha256_archived_copy": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1",
+        "s8_report_sha256_rendered": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1",
+        "s8_verifier_output": {
+          "campaign_total": 109,
+          "fake_sends": {
+            "A": 2,
+            "B": 24,
+            "qualification": 77,
+            "smoke": 6
+          },
+          "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
+          "milestone_verdict": null,
+          "publication_performed": false,
+          "qualification_seal_verified": true,
+          "real_provider_requests": 0,
+          "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683"
+        },
+        "sandbox_profile_sha256": "be50034ea5899bbcc3f35cbef3a51f9899deefc7f598e67e0465371db4281af4",
+        "sandboxed_steps": 11,
+        "stderr_last_line": {
+          "negative-absent-qualification": "ValueError: the S7 qualification directory given for recovery is absent",
+          "negative-different-qualification": "ValueError: the S7 qualification seal differs from the digest in the S8 plan",
+          "observe-plain-verify-without-qualification": "PermissionError: [Errno 1] Operation not permitted: '~/.local/state/pixelgym/evidence/runs/s7-20261119-main/qualification'"
+        },
+        "step_count": 11
+      },
+      "s7_verifier_sha256": "337b7b1fb8dc4d0d6bd1ed8c90a27ccfe8d0efccd779221698d00864e441e05a",
+      "verifier_outputs_identical_across_drills": true
+    },
+    "rehearsal": {
+      "activation_performed": true,
+      "approval": {
+        "activation_approved": true,
+        "actor": "withheld",
+        "actor_verification_source": "legacy_unverified",
+        "approved_on_as_written": "11.19.26",
+        "publication_approved": false
+      },
+      "approval_sha256": "sha256:a58a83f4690be913f037f200938b5364c337af95410ffb8d13e5d57001c45c3b",
+      "caller_transports": [
+        "loopback-listener:127.0.0.1:8765"
+      ],
+      "campaign_cap": 111,
+      "campaign_total": 109,
+      "commands": [
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal prepare --qualification ~/.local/state/pixelgym/evidence/runs/s7-20261119-main/qualification --state ~/.local/state/pixelgym/evidence/runs/s8-20261119-main/state --approval ~/.local/state/pixelgym/evidence/runs/s8-20261119-main/review/s8-approval.signed.json",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T01:11:48Z",
+          "git_status_entries": 0,
+          "log": "prepare-command.log",
+          "output": {
+            "fake_sends": 0,
+            "plan_sha256": "sha256:074d6acc5a81a4d332032886982f0502612110d9a015617e7da13bcf0554ae7a"
+          },
+          "source_head": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "started_utc": "2026-11-20T01:11:08Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal run --state ~/.local/state/pixelgym/evidence/runs/s8-20261119-main/state --listener-port 8765",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T01:18:00Z",
+          "log": "run-command.log",
+          "source_head": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+          "started_utc": "2026-11-20T01:11:54Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal verify --state ~/.local/state/pixelgym/evidence/runs/s8-20261119-main/state",
+          "exit_status": 0,
+          "finished_utc": "2026-11-20T01:18:20Z",
+          "log": "verify-command.log",
+          "output": {
+            "campaign_total": 109,
+            "fake_sends": {
+              "A": 2,
+              "B": 24,
+              "qualification": 77,
+              "smoke": 6
+            },
+            "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
+            "milestone_verdict": null,
+            "publication_performed": false,
+            "qualification_seal_verified": true,
+            "real_provider_requests": 0,
+            "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683"
+          },
+          "started_utc": "2026-11-20T01:18:05Z"
+        },
+        {
+          "exit_status": 0,
+          "log": "report-command.log",
+          "output_lines": 429,
+          "stderr_bytes": 0
+        }
+      ],
+      "driver_acceptance_checks": [
+        {
+          "elapsed_seconds": 15.013825,
+          "exit_status": 0,
+          "name": "stored_verification_replay"
+        }
+      ],
+      "evidence_label": "credential-free-scripted-engineering-validation",
+      "failure_record_present": false,
+      "ledger_sends": {
+        "A": 2,
+        "B": 24,
+        "qualification": 77,
+        "smoke": 6
+      },
+      "lifecycle_elapsed_seconds": 316.469451,
+      "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
+      "lifecycle_steps": [
+        {
+          "elapsed_seconds": 30.89622,
+          "fake_sends_after": {
+            "qualification": 77
+          },
+          "name": "register_and_refuse_unapproved_b",
+          "step": 1
+        },
+        {
+          "elapsed_seconds": 62.701497,
+          "fake_sends_after": {
+            "A": 1,
+            "qualification": 77,
+            "smoke": 1
+          },
+          "name": "approve_deploy_a_one_noop",
+          "step": 2
+        },
+        {
+          "elapsed_seconds": 112.018739,
+          "fake_sends_after": {
+            "A": 1,
+            "B": 1,
+            "qualification": 77,
+            "smoke": 3
+          },
+          "name": "approve_deploy_b_interrupt_and_restore",
+          "step": 3
+        },
+        {
+          "elapsed_seconds": 1.204576,
+          "fake_sends_after": {
+            "A": 1,
+            "B": 20,
+            "qualification": 77,
+            "smoke": 3
+          },
+          "name": "complete_b_golden_episode",
+          "step": 4
+        },
+        {
+          "elapsed_seconds": 33.969099,
+          "fake_sends_after": {
+            "A": 1,
+            "B": 24,
+            "qualification": 77,
+            "smoke": 4
+          },
+          "name": "redeploy_b_and_exhaust_cap",
+          "step": 5
+        },
+        {
+          "elapsed_seconds": 44.088036,
+          "fake_sends_after": {
+            "A": 2,
+            "B": 24,
+            "qualification": 77,
+            "smoke": 6
+          },
+          "name": "rollback_to_a_and_refuse_exhausted_b",
+          "step": 6
+        },
+        {
+          "elapsed_seconds": 0.145595,
+          "fake_sends_after": {
+            "A": 2,
+            "B": 24,
+            "qualification": 77,
+            "smoke": 6
+          },
+          "name": "cleanup_and_final_pointer",
+          "step": 7
+        }
+      ],
+      "milestone_verdict": null,
+      "phase_caps": {
+        "A": 4,
+        "B": 24,
+        "qualification": 77,
+        "smoke": 6
+      },
+      "plan_sha256": "sha256:074d6acc5a81a4d332032886982f0502612110d9a015617e7da13bcf0554ae7a",
+      "publication_performed": false,
+      "qualification_seal_verified": true,
+      "real_provider_requests": 0,
+      "rendered_report_file_sha256": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1",
+      "run_id": "s8-20261119-main",
+      "seal_sha256": "sha256:004ad599eabc4d5820de0657f8ab68578086b136bd5d77cc0568d31909bab644",
+      "source_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+      "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683",
+      "version_attempts": {
+        "A": 2,
+        "B": 24
+      },
+      "worker_os_sandbox_required": true,
+      "worker_proofs": [
+        {
+          "event": "deploy A",
+          "mechanism": "darwin_sandbox_exec",
+          "os_sandbox_applied": true,
+          "profile_sha256": "sha256:807fd73f2d52b50bbf984a354c31866f04c90e04c704841f9571dcadd14ab965"
+        },
+        {
+          "event": "deploy B",
+          "mechanism": "darwin_sandbox_exec",
+          "os_sandbox_applied": true,
+          "profile_sha256": "sha256:617be8f27d4168a6b1126bbc55e4e4c9795a9fa773f41bab788556ffb3a41f56"
+        },
+        {
+          "event": "restore_active B",
+          "mechanism": "darwin_sandbox_exec",
+          "os_sandbox_applied": true,
+          "profile_sha256": "sha256:27df3c0ca0a1fc8f908a5ea5d5ef5babad67780836ee8132b4be7ab86958e5ce"
+        },
+        {
+          "event": "deploy B",
+          "mechanism": "darwin_sandbox_exec",
+          "os_sandbox_applied": true,
+          "profile_sha256": "sha256:b32af6fa1317ccd9d854768980896d8a958c60c080f36c7748f96dd51d69919a"
+        },
+        {
+          "event": "rollback A",
+          "mechanism": "darwin_sandbox_exec",
+          "os_sandbox_applied": true,
+          "profile_sha256": "sha256:ed9432b703aa4b8f10a46102605571ee32c1cc074832263a00a8a67f6f895577"
+        }
+      ]
+    },
+    "retention": {
+      "backblaze_prefixes": {
         "s7-20261119-main": {
-          "check_command": "rclone check <archive> bb:<bucket>/s7-20261119-main --one-way",
+          "bucket_type": "allPrivate",
           "check_exit_status": 0,
           "copy_exit_status": 0,
           "count_reconciliation": {
@@ -391,125 +612,334 @@
             "archive_member_files": 7980,
             "manifest_json_bytes": 1920623,
             "manifest_json_files": 1,
-            "note": "the local receipt counts the archived member files under files/; the uploaded directory also holds the archive's manifest.json, so the Backblaze counts are one file and manifest_json_bytes larger",
             "uploaded_bytes": 1558362707,
             "uploaded_files": 7981
           },
+          "default_retention": {
+            "mode": null,
+            "period": null
+          },
           "differences": 0,
+          "file_retention_modes_observed": [
+            null
+          ],
           "matching_files": 7981,
+          "model_calls": 0,
+          "mutations": 0,
+          "object_lock_enabled": true,
           "observed_bytes": 1558362707,
-          "observed_file_count": 7981,
-          "restore_drill": "see recovery_checks"
+          "observed_file_count": 7981
         },
         "s8-20261119-main": {
-          "check_command": "rclone check <archive> bb:<bucket>/s8-20261119-main --one-way",
-          "check_exit_status": 0,
-          "copy_exit_status": 0,
+          "bucket_type": "allPrivate",
+          "check_exit_status": "not captured in a retained log",
+          "copy_exit_status": "not captured in a retained log",
           "count_reconciliation": {
             "archive_member_bytes": 1794546,
             "archive_member_files": 147,
             "manifest_json_bytes": 31192,
             "manifest_json_files": 1,
-            "note": "the local receipt counts the archived member files under files/; the uploaded directory also holds the archive's manifest.json, so the Backblaze counts are one file and manifest_json_bytes larger",
             "uploaded_bytes": 1825738,
             "uploaded_files": 148
           },
+          "default_retention": {
+            "mode": null,
+            "period": null
+          },
           "differences": 0,
+          "file_retention_modes_observed": [
+            null
+          ],
           "matching_files": 148,
+          "model_calls": 0,
+          "mutations": 0,
+          "object_lock_enabled": true,
           "observed_bytes": 1825738,
-          "observed_file_count": 148,
-          "restore_drill": {
-            "download": "rclone copy bb:<bucket>/s8-20261119-main <new directory> --checksum; exit status not captured separately",
-            "finished_utc": "2026-11-20T01:36:15Z",
-            "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
-            "restore_archive_expected_digest": "sha256:c59dc0de15b2183fe015d66893b257a70bc64b7a11ee93976755d7050f830b1f",
-            "restored_file_count": 147,
-            "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683",
-            "verify_command": ".venv/bin/python -m scripts.s8_rehearsal verify --state <restored>/state",
-            "verify_exit_status": 0
-          }
+          "observed_file_count": 148
+        },
+        "s8-recovery-drill-20261122": {
+          "bucket_type": "allPrivate",
+          "default_retention": {
+            "mode": null,
+            "period": null
+          },
+          "file_retention_modes_observed": [
+            null
+          ],
+          "model_calls": 0,
+          "mutations": 0,
+          "object_lock_enabled": true,
+          "observed_bytes": 71873,
+          "observed_file_count": 60
         }
       },
-      "rclone_version": "1.76.0",
-      "storage_rate_read_on": "2026-11-19",
-      "storage_rate_source": "https://www.backblaze.com/cloud-storage/pricing",
-      "storage_rate_usd_per_tb_month": 6.95,
-      "upload_command": "rclone copy <archive> bb:<bucket>/<prefix> --checksum --immutable"
-    },
-    "local_archives": {
-      "s7-20261027-s8driver": {
-        "bytes": 777140202,
-        "file_count": 3976,
-        "manifest_digest": "sha256:6158d75164b270c0f92ee1ed08ea131d4cd4e727de958fdd55c2442b2e15f4f1",
-        "source_fingerprint": "sha256:6d604750efa5b32419ae6381a651e240b1e0b3ac9f01b8173f5e71817f77819d"
-      },
-      "s7-20261119-main": {
-        "bytes": 1556442084,
-        "file_count": 7980,
-        "manifest_digest": "sha256:26c047116fe4fc57a6af28787534cad4ab8c5da2447dfa5185ca8da67903d5ce",
-        "source_fingerprint": "sha256:e8074fa16986396943f97bc2ced6c84ca0ad11f2171f5b875828cb7cd7e92912"
-      },
-      "s8-20261119-main": {
-        "bytes": 1794546,
-        "file_count": 147,
-        "manifest_digest": "sha256:c59dc0de15b2183fe015d66893b257a70bc64b7a11ee93976755d7050f830b1f",
-        "source_fingerprint": "sha256:cb44c86f3bdb9412f4d72e599b4ae85857409f9386b5a9b559196049a41a9b02"
+      "local_archives": {
+        "s7-20261027-s8driver": {
+          "bytes": 777140202,
+          "file_count": 3976,
+          "manifest_digest": "sha256:6158d75164b270c0f92ee1ed08ea131d4cd4e727de958fdd55c2442b2e15f4f1",
+          "source_fingerprint": "sha256:6d604750efa5b32419ae6381a651e240b1e0b3ac9f01b8173f5e71817f77819d"
+        },
+        "s7-20261119-main": {
+          "bytes": 1556442084,
+          "file_count": 7980,
+          "manifest_digest": "sha256:26c047116fe4fc57a6af28787534cad4ab8c5da2447dfa5185ca8da67903d5ce",
+          "source_fingerprint": "sha256:e8074fa16986396943f97bc2ced6c84ca0ad11f2171f5b875828cb7cd7e92912"
+        },
+        "s8-20261119-main": {
+          "bytes": 1794546,
+          "file_count": 147,
+          "manifest_digest": "sha256:c59dc0de15b2183fe015d66893b257a70bc64b7a11ee93976755d7050f830b1f",
+          "source_fingerprint": "sha256:cb44c86f3bdb9412f4d72e599b4ae85857409f9386b5a9b559196049a41a9b02"
+        }
       }
     },
-    "private_lfs_copy": "not made"
-  },
-  "review_findings": [
-    {
-      "finding": "recovery check not done as the proposal words it",
-      "id": 1,
-      "status": "addressed by restores from the local archive and Backblaze with exit statuses and by the owner's 2026-11-20 amendment naming Backblaze as the recovery copy; no private LFS restore; no Object Lock retention; verifier isolation not as specified"
-    },
-    {
-      "finding": "the observation labelled rollback_to_exhausted_B was refused by the rollback lineage rule (TransitionError, candidate_id null), not by an exhaustion check; exhaustion is shown only by redeploy_exhausted_B (StatefulLoadError)",
-      "id": 2,
-      "status": "confirmed in lifecycle.json; sealed evidence is unchanged; disclosed here"
-    },
-    {
-      "finding": "both 409 deployment_changed probes used episodes that had already ended; no live episode from an old deployment was refused in the rehearsal",
-      "id": 3,
-      "status": "confirmed; that case rests on unit tests only (tests/unit/platform/test_stateful_control_plane.py)"
-    },
-    {
-      "finding": "acceptance-checks.json holds one command; regression-backed rows had no raw command at the rehearsal revision; record.json has no generator or test",
-      "id": 4,
-      "status": "partly addressed: regression and opt-in Darwin sandbox commands recorded in acceptance-regression-steps.jsonl; record.json is still operator-assembled"
-    },
-    {
-      "finding": "sandbox enforcement is the launcher's own report; the five profile digests cannot be checked because no profile text is retained in the S8 state",
-      "id": 5,
-      "status": "confirmed; not fixable for this run"
-    },
-    {
-      "finding": "pixelgym/platform/s8_rehearsal.py compares B's attempt count with a literal 24 in step 6 instead of the plan's cap",
-      "id": 6,
-      "status": "confirmed; not changed"
-    },
-    {
-      "finding": "approved_on in the approval document reads 11.19.26; the run state lives outside the repository because the driver refuses an in-checkout path while AGENTS.md section 7 asks for a git-ignored path inside it; the 2026-10-27 qualification (77 sends) was never used",
-      "id": 7,
-      "status": "confirmed; disclosed"
-    },
-    {
-      "finding": "the frozen S8 verifier reads the original S7 path from the sealed plan; an absent directory exits 0 with qualification_seal_verified null and a different valid qualification printed false and exited 0",
-      "id": 8,
-      "status": "confirmed; verify now takes --qualification and raises on absence or mismatch, plain verify raises on mismatch; drills repeated with originals and working checkout blocked, see recovery_drill_20261122"
-    },
-    {
-      "finding": "the run command exited 0 even when its acceptance subprocess exited nonzero",
-      "id": 9,
-      "status": "confirmed; run now exits nonzero in that case"
+    "storage_estimate": {
+      "bucket_total_bytes_with_versions": 27669300962,
+      "estimated_monthly_charge_usd": 0.19,
+      "inputs_are_operator_statements": true,
+      "storage_rate_usd_per_tb_month": 6.95
     }
-  ],
-  "runtime": {
-    "distribution_count": 450,
-    "python": "3.12.16",
-    "runtime_lock_sha256": "sha256:beb1ef0aab488045e3f11b81bee58b3037cde3617728eb83b6248d8c445a6edd"
   },
-  "schema_version": "pixelgym-s8-rehearsal-evidence-record-v1",
-  "source_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5"
+  "generated_by": {
+    "operator_statements_file": "operator-statements.json",
+    "operator_statements_sha256": "4bbc568d37bb8fa55d57421a148bcfa232ab20dbd16dd87d4c658354bcab4945",
+    "script": "scripts/build_s8_evidence_record.py"
+  },
+  "milestone_verdict": null,
+  "operator_statements": {
+    "descriptions": {
+      "acceptance_regression": "run after the rehearsal at the rehearsal revision; the two skipped tests need PIXELGYM_RUN_V5_CLI_SANDBOX_TESTS=1 and the Claude CLI and were not run; the driver's own acceptance-checks.json holds only the stored_verification_replay command",
+      "command_templates": {
+        "object_lock_observation": "scripts/observe_b2_object_lock.py <prefix>",
+        "upload": "rclone copy <archive> bb:<bucket>/<prefix> --checksum --immutable",
+        "upload_check": "rclone check <archive> bb:<bucket>/<prefix> --one-way"
+      },
+      "count_reconciliation": "the local receipt counts the archived member files under files/; the uploaded directory also holds the archive's manifest.json, so each Backblaze count is one file and manifest_json_bytes larger",
+      "private_lfs_copy": "not made",
+      "recovery_checks_20261120": {
+        "limits": [
+          "each restored S8 state still names the original qualification directory in its plan, so its verify reads the original qualification, not a restored one",
+          "restores ran on the same host and checkout as the rehearsal",
+          "the earlier 2026-11-20T01:36Z Backblaze restore did not capture the download exit status; the s8-b2-download step here does",
+          "the verifier ran from the working checkout at the bound revision, not in an isolated credential-free interpreter against the bundle's source snapshot"
+        ],
+        "status_against_proposal": "the S7 proposal as first written requires a fresh-cache private LFS restore, which was not made; the owner amended the proposal on 2026-11-20 to make a Backblaze B2 restore the recovery copy; the recorded steps follow the amended check except that the verifier ran from the working checkout rather than an isolated interpreter against the bundled source; the owner grades whether the check is met"
+      },
+      "recovery_drill_20261122": {
+        "campaign_sends": 0,
+        "code_location": "a separate clone outside the working checkout",
+        "isolation": {
+          "controls": "ls of the original S8 state, the original S7 qualification, and the working checkout's scripts directory each exited nonzero inside the sandbox",
+          "denied_in_b2_drill_also": [
+            "evidence/archives (local archives)"
+          ],
+          "denied_in_both": [
+            "the working checkout",
+            "evidence/runs (original S7 and S8 run directories)",
+            "evidence/restores (earlier restores)",
+            "evidence-backup"
+          ],
+          "mechanism": "sandbox-exec, allow-default profile with a deny list for file-read* and file-write*"
+        },
+        "limits": [
+          "same host as the rehearsal",
+          "the Backblaze downloads ran outside the sandbox and read credentials from the working checkout's .env",
+          "the clone was taken from the working checkout's Git repository and the virtualenv packages were copied from the working virtualenv before the sandboxed steps",
+          "the sandbox profile is allow-default with a deny list, not deny-default",
+          "the S8 verifier is the amended command at the code revision above, not the verifier frozen at the rehearsal revision; the S7 verifier is the bundle's own frozen code",
+          "the drill script and sandbox profiles contain local paths and are retained privately, with digests in the raw output"
+        ],
+        "negative_controls": "an absent qualification directory and the nested 2026-10-27 predecessor qualification (sealed and valid, but not the one the S8 plan binds) were each passed with --qualification; plain verify without --qualification was also run as an observation",
+        "purpose": "repeat the local-archive and Backblaze restores with the original run directories and the working checkout inaccessible, and require the restored S7 qualification explicitly",
+        "python_environment": "a new virtualenv on the same Homebrew Python 3.12.16, with site-packages copied from the working virtualenv except torch, sympy, mpmath and the editable pixelgym link",
+        "raw_output": "stdout and stderr of every step, the drill script and both sandbox profiles are retained privately; each step file row carries stdout_sha256 and stderr_sha256",
+        "s7_verifier": {
+          "file": "recovery-drill-20261122/verify_s7_bundle.py.txt",
+          "how": "env -i, python -I -B; imports pixelgym and scripts only from the restored bundle's own source snapshot after checking it against source-binding.json"
+        },
+        "s8_verifier_command": "scripts.s8_rehearsal verify --state <restored S8 state> --qualification <restored S7 qualification>"
+      }
+    },
+    "limitations": [
+      "the owner has not graded S8; this record declares no verdict",
+      "the audit actor is a string, not authenticated human identity; the approval digest is the recorded authority",
+      "real-provider requests and spending are declared constants of the fixture-only boundary, not independent network or billing measurements",
+      "the s7-20261027-s8driver qualification has a local archive only; a copy is nested in the s7-20261119-main archive as a predecessor",
+      "no Object Lock retention is set on the uploaded files, and no private LFS copy was made",
+      "qualify, verify, and report exit statuses for s7-20261027-s8driver were partly not captured in its own logs; that run was not used for this rehearsal",
+      "worker sandbox proofs are self-reported by the launcher and their profile text was not retained",
+      "the recovery check follows the 2026-11-20 amendment (Backblaze), which was written after the restores ran; the verifier was not run in an isolated interpreter",
+      "the rollback-to-B probe shows the lineage rule, not exhaustion; the supplemental scenario the owner chose for it has not been run",
+      "stale-deployment refusals were observed only for ended episodes; the owner accepted unit regressions for the live case",
+      "operator_statements and derived.storage_estimate rest on what the operator typed; a reviewer without the private inputs cannot recompute the derived block"
+    ],
+    "not_captured": [
+      {
+        "detail": "not recorded for these runs; an earlier version of this record gave 1.76.0, which was copied from a previous evidence record in the repository and not observed here",
+        "field": "rclone version used for these uploads"
+      },
+      {
+        "detail": "the command's status was masked by a pipe",
+        "field": "exit status of the first Backblaze download of s8-20261119-main (2026-11-20T01:36Z)"
+      },
+      {
+        "detail": "seen as 0 on the terminal only; see operator_observations.s8_upload",
+        "field": "copy and check exit statuses of the s8-20261119-main upload in a retained log"
+      },
+      {
+        "detail": "copy and check ran without a log file; see operator_observations.drill_log_upload",
+        "field": "any log of the s8-recovery-drill-20261122 upload"
+      },
+      {
+        "detail": "terminal output only; see operator_observations.backblaze_storage",
+        "field": "bucket totals from rclone size"
+      },
+      {
+        "detail": "the driver retained digests only",
+        "field": "sandbox profile bytes for the five rehearsal worker launches"
+      },
+      {
+        "detail": "the report logs record exit status, line count, and stderr size but not the command",
+        "field": "the command line of each report command"
+      },
+      {
+        "detail": "its own logs say they were not captured; that run was not used for this rehearsal",
+        "field": "exit statuses of prepare and qualify for the unused s7-20261027-s8driver qualification"
+      }
+    ],
+    "note": "Everything in this file is an operator statement: it cannot be derived from the private stored evidence or the retained logs. The generator copies it into record.json unchanged. Qualification and rehearsal content stays private. The owner grades S8; nothing here is a verdict.",
+    "operator_observations": {
+      "backblaze_storage": {
+        "bucket_total_bytes_with_versions_after_drill_upload": 27669300962,
+        "bucket_total_bytes_with_versions_after_s8_upload": 27669229089,
+        "bucket_total_objects_with_versions_after_drill_upload": 8633,
+        "bucket_total_objects_with_versions_after_s8_upload": 8573,
+        "measured_with": "rclone size bb:<bucket> --b2-versions",
+        "storage_rate_read_on": "2026-11-19",
+        "storage_rate_source": "https://www.backblaze.com/cloud-storage/pricing",
+        "storage_rate_usd_per_tb_month": 6.95
+      },
+      "drill_log_upload": {
+        "check_exit_status": 0,
+        "copy_exit_status": 0,
+        "matching_files": 60,
+        "note": "no log of this upload was retained; the object-lock observation of the prefix is retained and is in derived.retention",
+        "prefix": "s8-recovery-drill-20261122",
+        "rclone_check_differences": 0
+      },
+      "first_backblaze_restore_of_s8": {
+        "download_exit_status": "not captured",
+        "finished_utc": "2026-11-20T01:36:15Z",
+        "note": "superseded by derived.recovery_checks_20261120, whose s8-b2-download step records the exit status",
+        "restored_file_count": 147,
+        "verify_exit_status": 0
+      },
+      "note": "Values the operator saw on a terminal. No retained log holds them, so the generator cannot check them.",
+      "pre_run_check": {
+        "command": "PIXELGYM_RUN_V5_SANDBOX_TESTS=1 .venv/bin/python -m pytest tests/integration/test_s8_rehearsal_local.py -q",
+        "note": "throwaway qualification; not part of the counted campaign",
+        "result": "1 passed in 63.12s"
+      },
+      "recovery_checks_20261120_checkout_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+      "s8_upload": {
+        "check_exit_status": 0,
+        "copy_exit_status": 0,
+        "note": "the s8-20261119-main upload's copy.log and check.log hold rclone's output but not the exit statuses"
+      }
+    },
+    "owner_decisions": [
+      {
+        "date": "2026-11-19",
+        "decision": "approved a fresh S7 qualification at current main (77 fake sends, no spend)",
+        "id": 1,
+        "recorded_as": "given in chat; the approval text is retained in the private plan.json"
+      },
+      {
+        "date": "2026-11-19",
+        "decision": "signed the S8 approval document for the exact packages A and B and chose the real loopback listener on 127.0.0.1 for the rehearsal caller",
+        "id": 2,
+        "recorded_as": "the signed approval document is private and bound by approval_sha256; the listener choice was given in chat"
+      },
+      {
+        "date": "2026-11-20",
+        "decision": "amended the S7 proposal so that a Backblaze B2 copy replaces the private LFS copy as the recovery copy for runs from s7-20261119-main onward",
+        "id": 3,
+        "recorded_as": "given in chat; docs/s7-serving-demo-proposal.md#amendment-2026-11-20-backblaze-b2-replaces-the-private-lfs-copy; written after the 2026-11-20 restores ran"
+      },
+      {
+        "date": "2026-11-20",
+        "decision": "Object Lock retention on the Backblaze prefixes: not now",
+        "id": 4,
+        "recorded_as": "given in chat"
+      },
+      {
+        "date": "2026-11-22",
+        "decision": "the rollback-for-exhaustion gap will be closed by a narrow supplemental scenario: exhaust B, explicitly deploy A so that B stays an eligible rollback target, then request rollback, capturing B's candidate ID, the exhaustion error, the rollback_failed audit event, A's unchanged deployment ID, and B's unchanged attempt count, with activation smoke sends accounted separately",
+        "id": 5,
+        "recorded_as": "given in chat; the scenario has not been run and needs separate approval"
+      },
+      {
+        "date": "2026-11-22",
+        "decision": "the owner accepts the existing unit regressions as coverage for a live episode crossing a deployment change; this is an explicit exception to integrated evidence for that case",
+        "id": 6,
+        "recorded_as": "given in chat"
+      },
+      {
+        "date": "2026-11-22",
+        "decision": "build a generator with a check mode for this record now, and add sandbox-profile retention before the next rehearsal worker launch",
+        "id": 7,
+        "recorded_as": "given in chat"
+      }
+    ],
+    "review_findings": [
+      {
+        "finding": "recovery check not done as the proposal words it",
+        "id": 1,
+        "status": "addressed by restores from the local archive and Backblaze with exit statuses and by the owner's 2026-11-20 amendment naming Backblaze as the recovery copy; no private LFS restore; no Object Lock retention; verifier isolation not as specified"
+      },
+      {
+        "finding": "the observation labelled rollback_to_exhausted_B was refused by the rollback lineage rule (TransitionError, candidate_id null), not by an exhaustion check; exhaustion is shown only by redeploy_exhausted_B (StatefulLoadError)",
+        "id": 2,
+        "status": "confirmed in lifecycle.json; sealed evidence is unchanged. On 2026-11-22 the owner chose to close this with a narrow supplemental scenario (owner decision 5), which has not been run and needs separate approval"
+      },
+      {
+        "finding": "both 409 deployment_changed probes used episodes that had already ended; no live episode from an old deployment was refused in the rehearsal",
+        "id": 3,
+        "status": "confirmed; the live case rests on unit tests only (tests/unit/platform/test_stateful_control_plane.py). On 2026-11-22 the owner accepted those regressions as coverage, an explicit exception to integrated evidence for this case (owner decision 6)"
+      },
+      {
+        "finding": "acceptance-checks.json holds one command; regression-backed rows had no raw command at the rehearsal revision; record.json has no generator or test",
+        "id": 4,
+        "status": "partly addressed: regression and opt-in Darwin sandbox commands are recorded in acceptance-regression-steps.jsonl; record.json is now generated by scripts/build_s8_evidence_record.py with a --check mode and a unit test. The driver's own acceptance-checks.json still holds one command"
+      },
+      {
+        "finding": "sandbox enforcement is the launcher's own report; the five profile digests cannot be checked because no profile text is retained in the S8 state",
+        "id": 5,
+        "status": "confirmed; not fixable for this run. The five launcher digests survive and the profile bytes were never captured. The owner asked for profile retention before the next worker launch (owner decision 7)"
+      },
+      {
+        "finding": "pixelgym/platform/s8_rehearsal.py compares B's attempt count with a literal 24 in step 6 instead of the plan's cap",
+        "id": 6,
+        "status": "confirmed; not changed"
+      },
+      {
+        "finding": "approved_on in the approval document reads 11.19.26; the run state lives outside the repository because the driver refuses an in-checkout path while AGENTS.md section 7 asks for a git-ignored path inside it; the 2026-10-27 qualification (77 sends) was never used",
+        "id": 7,
+        "status": "confirmed; disclosed"
+      },
+      {
+        "finding": "the frozen S8 verifier reads the original S7 path from the sealed plan; an absent directory exits 0 with qualification_seal_verified null and a different valid qualification printed false and exited 0",
+        "id": 8,
+        "status": "confirmed; verify now takes --qualification and raises on absence or mismatch, plain verify raises on mismatch; drills repeated with originals and working checkout blocked, see recovery_drill_20261122"
+      },
+      {
+        "finding": "the run command exited 0 even when its acceptance subprocess exited nonzero",
+        "id": 9,
+        "status": "confirmed; run now exits nonzero in that case"
+      }
+    ],
+    "schema_version": "pixelgym-s8-operator-statements-v1"
+  },
+  "schema_version": "pixelgym-s8-rehearsal-evidence-record-v2"
 }

@@ -37,8 +37,8 @@ S7_RUN, S8_RUN, DRILL_PREFIX = "s7-20261119-main", "s8-20261119-main", "s8-recov
 ARCHIVED_RUNS = ("s7-20261027-s8driver", S7_RUN, S8_RUN)
 _HOME = Path.home()
 _STATE = _HOME / ".local/state/pixelgym"
-# An absolute home directory on macOS or Linux at the start of a path (not ``~/dev/x/home/``);
-# ``~/`` paths are already redacted.
+# An absolute home directory on macOS or Linux at the start of a path, not a nested directory
+# such as ``~/dev/x/root``; ``~/`` paths are already redacted.
 _HOME_PATH = re.compile(r"(?<![\w.~-])(?:(?:/Users|/home)/[^/\s\"']+|/root(?=[/\s\"']|$))")
 
 

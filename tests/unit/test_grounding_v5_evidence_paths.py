@@ -106,14 +106,6 @@ LOCAL_PATH_MARKERS = ("/Users/", "/home/", "/private/tmp/")
 # detectors that reject local paths in published evidence; they are not paths themselves.
 LOCAL_PATH_ALLOWLIST: dict[tuple[str, str], str] = {
     (
-        "scripts/build_s8_evidence_record.py",
-        'return re.sub(r"/Users/[^/\\s\\"\']+", "~", text)',
-    ): "redaction pattern that replaces any user directory with ~ before a record is written",
-    (
-        "scripts/build_s8_evidence_record.py",
-        'if "/Users/" in rendered or _HOME.name in rendered:',
-    ): "private-surface check on the generated S8 evidence record",
-    (
         "scripts/publish_grounding_v5_d56_completed_calibrations.py",
         '_LOCAL_PATH = re.compile(r"(?:/Users/|/home/|[A-Za-z]:\\\\\\\\Users\\\\\\\\)")',
     ): "local-path detector regex; hash-bound by published D5.6 evidence",

@@ -8,6 +8,7 @@ real loopback listener.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import socket
@@ -502,6 +503,69 @@ def test_unenforced_fixture_workers_are_recorded_honestly(rehearsed: SimpleNames
     verification = read_json(rehearsed.state / "verification.json")
     assert verification["worker_enforcement"]["all_enforced"] is False
     assert verification["worker_enforcement"]["worker_count"] == 5
+    # The unenforced fixture launcher reports no profile text, so nothing is retained.
+    assert all(p["profile_retained"] is False for p in proofs)
+    assert verification["worker_enforcement"]["profiles_retained"] == 0
+    assert not (rehearsed.state / s8_rehearsal.PROFILE_DIRECTORY).exists()
+
+
+def test_sandbox_profile_bytes_are_retained_by_digest_and_verified(
+    qualified_fixture: Path,  # noqa: F811
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    synthetic_host(monkeypatch)
+    state = prepared_state(qualified_fixture, tmp_path, "profiles")
+    rehearsal = Rehearsal(qualified_fixture.parent / "checkout", state, require_os_sandbox=False)
+    text = '(version 1)\n(deny default)\n(allow file-read* (subpath "/private/example"))\n'
+    digest = "sha256:" + hashlib.sha256(text.encode()).hexdigest()
+
+    assert rehearsal.retain_profile(None, None) is False
+    assert rehearsal.retain_profile(digest, None) is False
+    assert rehearsal.retain_profile(digest, text) is True
+    assert rehearsal.retain_profile(digest, text) is True  # a second worker, same profile
+    stored = state / s8_rehearsal.PROFILE_DIRECTORY / (digest[7:] + ".sb")
+    assert stored.read_bytes() == text.encode()
+    with pytest.raises(RehearsalStopped, match="differs from its digest"):
+        rehearsal.retain_profile(digest, text + " ")
+
+    proofs = [
+        {"profile_sha256": digest, "profile_retained": True},
+        {"profile_sha256": digest, "profile_retained": True},
+        {"profile_sha256": None, "profile_retained": False},
+    ]
+    assert s8_rehearsal.verify_retained_profiles(state, proofs) == 2
+    with pytest.raises(ValueError, match="differ from the worker events"):
+        s8_rehearsal.verify_retained_profiles(state, proofs[2:])
+    (stored.parent / ("0" * 64 + ".sb")).write_bytes(b"unreferenced")
+    with pytest.raises(ValueError, match="differ from the worker events"):
+        s8_rehearsal.verify_retained_profiles(state, proofs)
+    (stored.parent / ("0" * 64 + ".sb")).unlink()
+    stored.chmod(0o600)
+    stored.write_bytes(b"altered")
+    with pytest.raises(ValueError, match="bytes differ from their digest"):
+        s8_rehearsal.verify_retained_profiles(state, proofs)
+    stored.unlink()
+    with pytest.raises(ValueError, match="differ from the worker events"):
+        s8_rehearsal.verify_retained_profiles(state, proofs)
+
+
+def test_verification_of_a_run_without_retention_fields_is_unchanged(
+    rehearsed: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A lifecycle sealed before retention has no ``profile_retained`` key in its proofs."""
+    legacy = dict(read_json(rehearsed.state / "lifecycle.json"))
+    legacy["worker_proofs"] = [
+        {k: v for k, v in p.items() if k != "profile_retained"} for p in legacy["worker_proofs"]
+    ]
+    original = s8_rehearsal.read_json
+
+    def without_retention(path: Path) -> Any:
+        return legacy if path == rehearsed.state / "lifecycle.json" else original(path)
+
+    monkeypatch.setattr(s8_rehearsal, "read_json", without_retention)
+    verification = s8_rehearsal.inspect_rehearsal(rehearsed.state)
+    assert "profiles_retained" not in verification["worker_enforcement"]
 
 
 def test_required_os_sandbox_refuses_an_unenforced_worker_and_seals_the_stop(

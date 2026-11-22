@@ -22,7 +22,7 @@ import json
 import shutil
 import sqlite3
 import time
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -94,6 +94,7 @@ VERIFICATION_SCHEMA = "pixelgym-s8-verification-v1"
 CHECKS_SCHEMA = "pixelgym-s8-acceptance-checks-v1"
 REPORT_SCHEMA = "pixelgym-s8-review-report-v1"
 INTERRUPTION_BOUNDARY = "canonical_response_persisted"
+PROFILE_DIRECTORY = "worker-profiles"
 EXPECTED_SENDS = {"A": 2, "B": 24, "smoke": 6}
 STEP_NAMES = (
     "register_and_refuse_unapproved_b",
@@ -821,12 +822,34 @@ class Rehearsal:
             "mechanism": policy.sandbox_mechanism,
             "profile_sha256": policy.sandbox_profile_digest,
         }
+        proof["profile_retained"] = self.retain_profile(
+            policy.sandbox_profile_digest, getattr(policy, "sandbox_profile_text", None)
+        )
         self.worker_proofs.append(proof)
         self.expect(
             not self.require_os_sandbox or proof["os_sandbox_applied"] is True,
             "the serving worker lacks OS sandbox enforcement",
         )
         return proof
+
+    def retain_profile(self, digest: str | None, text: str | None) -> bool:
+        """Keep the exact sandbox profile bytes privately, named by their digest.
+
+        The profile holds local paths, so it stays in the private state directory and only
+        its digest is published. A launcher that reports no profile text retains nothing.
+        """
+        if digest is None or text is None:
+            return False
+        data = text.encode("utf-8")
+        self.expect(
+            digest == _digest(data), "the worker's sandbox profile text differs from its digest"
+        )
+        path = self.state / PROFILE_DIRECTORY / (digest.removeprefix("sha256:") + ".sb")
+        if path.exists():
+            self.expect(path.read_bytes() == data, "a retained sandbox profile changed")
+        else:
+            write_private(path, data)
+        return True
 
     def deploy(self, role: str, reason: str) -> dict[str, Any]:
         assert self.stack is not None
@@ -1413,6 +1436,24 @@ def seal(state: Path) -> dict[str, Any]:
 # Semantic verification (read-only) ----------------------------------------------------------
 
 
+def verify_retained_profiles(state: Path, proofs: Sequence[Mapping[str, Any]]) -> int:
+    """Check each retained sandbox profile against the digest its worker event recorded.
+
+    Returns the number of worker events whose profile bytes are retained. Raises when a
+    retained profile is missing or altered, or when a stored profile belongs to no event.
+    """
+    directory = state / PROFILE_DIRECTORY
+    retained = [p for p in proofs if p.get("profile_retained") is True]
+    expected = {p["profile_sha256"].removeprefix("sha256:") + ".sb" for p in retained}
+    present = {p.name for p in directory.iterdir()} if directory.is_dir() else set()
+    if present != expected:
+        raise ValueError("S8 retained sandbox profiles differ from the worker events")
+    for name in expected:
+        if _digest((directory / name).read_bytes()) != "sha256:" + name.removesuffix(".sb"):
+            raise ValueError("S8 retained sandbox profile bytes differ from their digest")
+    return len(retained)
+
+
 def _read_only(path: Path) -> sqlite3.Connection:
     query = "?mode=ro" if path.with_name(path.name + "-wal").exists() else "?mode=ro&immutable=1"
     return sqlite3.connect(path.resolve().as_uri() + query, uri=True)
@@ -1600,6 +1641,10 @@ def inspect_rehearsal(state: Path) -> dict[str, Any]:
         "mechanisms": sorted({p["mechanism"] for p in proofs}),
         "caller_kinds": lifecycle["caller_kinds"],
     }
+    # Runs from before profile retention carry no ``profile_retained`` key; their stored
+    # verification has no such count, and it must still be reproduced exactly.
+    if any("profile_retained" in p for p in proofs):
+        enforcement["profiles_retained"] = verify_retained_profiles(state, proofs)
     if [p["event"] for p in proofs] != [
         "deploy A",
         "deploy B",

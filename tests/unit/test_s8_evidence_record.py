@@ -90,7 +90,7 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
         q / "plan.json",
         {
             "run_id": "s7-fixture",
-            "gate_policy_sha256": "p" * 64,
+            "gate_policy_sha256": content_digest(policy).removeprefix("sha256:"),
             "cumulative_accounting": {
                 "records": [{"qualification_sends": 0}, {"qualification_sends": 4}],
                 "previous_qualification_sends": 4,
@@ -347,6 +347,49 @@ def test_local_user_paths_are_redacted(tmp_path: Path) -> None:
     assert str(Path.home()) not in rendered and "/Users/" not in rendered
     assert "tool prepare --run ~/private/run" in rendered
     assert "PermissionError: '~/private/qualification'" in rendered
+
+
+def _add_statement(public: Path, key: str, value: Any) -> Path:
+    statements = public / "operator-statements.json"
+    statements.write_text(json.dumps({**json.loads(statements.read_text()), key: value}))
+    return statements
+
+
+def test_other_home_directory_forms_are_redacted_and_never_reach_the_record(
+    tmp_path: Path,
+) -> None:
+    assert generator.redact("tool --run /home/alice/private/run") == "tool --run ~/private/run"
+    assert generator.redact("cd /root/x && ls ~/y") == "cd ~/x && ls ~/y"
+    assert generator.redact("ls ~/dev/home/x ~/dev/root/y") == "ls ~/dev/home/x ~/dev/root/y"
+
+    inputs, public = build_tree(tmp_path)
+    statements = _add_statement(public, "note", "copied from /home/alice/private/run")
+    with pytest.raises(ValueError, match="local user path or name"):
+        generator.build(inputs, statements)
+
+
+def test_the_account_name_is_matched_only_as_a_whole_word(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    inputs, public = build_tree(tmp_path)
+    monkeypatch.setattr(generator, "_HOME", Path("/Users/sandbox"))
+
+    record = generator.build(inputs, public / "operator-statements.json")
+    assert "worker_os_sandbox_required" in record["derived"]["rehearsal"]
+
+    statements = _add_statement(public, "note", "run by sandbox on the host")
+    with pytest.raises(ValueError, match="local user path or name"):
+        generator.build(inputs, statements)
+
+
+def test_a_gate_policy_that_differs_from_its_bound_digest_is_refused(tmp_path: Path) -> None:
+    inputs, public = build_tree(tmp_path)
+    policy_path = inputs.s7_run / "qualification/gate-policy.json"
+    policy = json.loads(policy_path.read_text())
+    policy_path.write_text(json.dumps({**policy, "campaign_cap": 999}))
+
+    with pytest.raises(ValueError, match="gate policy differs from the digest its plan binds"):
+        generator.build(inputs, public / "operator-statements.json")
 
 
 def test_check_passes_on_a_fresh_record_and_fails_after_one_edit(

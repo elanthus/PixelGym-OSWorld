@@ -37,6 +37,9 @@ S7_RUN, S8_RUN, DRILL_PREFIX = "s7-20261119-main", "s8-20261119-main", "s8-recov
 ARCHIVED_RUNS = ("s7-20261027-s8driver", S7_RUN, S8_RUN)
 _HOME = Path.home()
 _STATE = _HOME / ".local/state/pixelgym"
+# An absolute home directory on macOS or Linux at the start of a path (not ``~/dev/x/home/``);
+# ``~/`` paths are already redacted.
+_HOME_PATH = re.compile(r"(?<![\w.~-])(?:(?:/Users|/home)/[^/\s\"']+|/root(?=[/\s\"']|$))")
 
 
 class MissingInput(ValueError):
@@ -99,7 +102,20 @@ def _steps(path: Path) -> list[dict[str, Any]]:
 def redact(text: str) -> str:
     """Replace the operator's home directory, and any other user directory, with ``~``."""
     text = text.replace(str(_HOME), "~")
-    return re.sub(r"/Users/[^/\s\"']+", "~", text)
+    return _HOME_PATH.sub("~", text)
+
+
+def exposes_local_user(rendered: str) -> bool:
+    """Whether text still holds an absolute home path or the account name as a whole word.
+
+    ``_`` is a word character, so an account named like a common word (``sandbox``) does not
+    match inside keys such as ``worker_os_sandbox_required``; a standalone occurrence does.
+    """
+    return (
+        str(_HOME) in rendered
+        or _HOME_PATH.search(rendered) is not None
+        or re.search(rf"\b{re.escape(_HOME.name)}\b", rendered) is not None
+    )
 
 
 def ledger_counts(path: Path) -> dict[str, int]:
@@ -268,6 +284,11 @@ def rehearsal(inputs: Inputs, qualified: dict[str, Any]) -> dict[str, Any]:
         "a verdict is stored",
     )
     policy = _json(inputs.s7_run / "qualification/gate-policy.json")
+    _require(
+        content_digest(policy).removeprefix("sha256:")
+        == qualified["gate_policy_sha256"].removeprefix("sha256:"),
+        "S7 gate policy differs from the digest its plan binds",
+    )
     checks = _json(state / "acceptance-checks.json")["checks"]
     run = command_log(logs / "run-command.log")
     prepare = command_log(logs / "prepare-command.log")
@@ -544,7 +565,7 @@ def build(inputs: Inputs, statements_path: Path) -> dict[str, Any]:
         "operator_statements": statements,
     }
     rendered = json.dumps(record, sort_keys=True)
-    if "/Users/" in rendered or _HOME.name in rendered:
+    if exposes_local_user(rendered):
         raise ValueError("the record would contain a local user path or name")
     return record
 

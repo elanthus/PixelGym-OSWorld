@@ -135,7 +135,7 @@ def test_real_sandbox_and_loopback_listener_rehearsal(tmp_path: Path) -> None:
         assert (
             "sha256:" + hashlib.sha256(stored.read_bytes()).hexdigest() == proof["profile_sha256"]
         )
-        assert stored.read_bytes().startswith(b"(version 1)")
+        assert b"(version 1)\n(deny default)" in stored.read_bytes()
 
 
 def test_real_sandbox_rollback_supplement_is_refused_by_exhaustion(tmp_path: Path) -> None:

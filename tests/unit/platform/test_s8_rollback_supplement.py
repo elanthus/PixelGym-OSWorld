@@ -77,6 +77,7 @@ def ran(qualified_fixture: Path, tmp_path_factory: Any) -> SimpleNamespace:  # n
         lifecycle=result,
         checks=checks,
         launcher=launcher,
+        scenario=lifecycle,
         steps={step["name"]: step["observations"] for step in result["steps"]},
     )
 
@@ -161,6 +162,18 @@ def test_sends_match_the_scenario_and_stay_within_caps(ran: SimpleNamespace) -> 
     assert final["final_active_deployment"]["candidate_id"] == ran.lifecycle["candidates"]["A"]
     assert [h["action"] for h in final["deployment_history"]] == ["deploy", "deploy"]
     assert final["workers_stopped"] is True and final["environments_closed"] is True
+
+
+def test_cleanup_stopped_every_worker_including_the_refused_preparation(
+    ran: SimpleNamespace,
+) -> None:
+    # Three launches: deploy B, deploy A, and the worker preparation started for the refused
+    # rollback. None may outlive the scenario.
+    assert len(ran.launcher.processes) == 3
+    assert all(process.poll() is not None for process in ran.launcher.processes)
+    assert ran.scenario.stack is None
+    assert all(env.closed for env in ran.scenario.environments)
+    assert not list(ran.state.rglob("*-wal"))
 
 
 def test_stored_verification_binds_the_exhaustion_refusal(ran: SimpleNamespace) -> None:

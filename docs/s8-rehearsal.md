@@ -1,8 +1,10 @@
 # S8 rehearsal driver
 
 - **Status:** driver implemented; the rehearsal was executed once on 2026-11-20 (UTC) from
-  revision `578202a7` ([evidence record](../artifacts/evidence-s8-rehearsal-20261119/README.md)). S8 remains a
-  human-owned gate that the owner has not graded. No milestone verdict is recorded here.
+  revision `578202a7` ([evidence record](../artifacts/evidence-s8-rehearsal-20261119/README.md)), and the
+  [rollback-for-exhaustion supplement](#rollback-for-exhaustion-supplement) once on 2026-11-23
+  (UTC) from `15e5da7c` ([evidence record](../artifacts/evidence-s8-supplement-20261123/README.md)). S8
+  remains a human-owned gate that the owner has not graded. No milestone verdict is recorded here.
 - **Specification:** the seven ordered lifecycle steps, the recovery rules, and the acceptance
   table in the [S7 proposal](s7-serving-demo-proposal.md#phase-caps-and-proposed-rehearsal).
 - **Code:** `pixelgym/platform/s8_rehearsal.py` and `scripts/s8_rehearsal.py`.
@@ -125,8 +127,10 @@ approval has no such field, so neither approval can stand in for the other. `run
 the revision it runs from.
 
 **Status:** implemented and covered by unit tests and the opt-in real-sandbox integration test.
-It has not been executed against a counted qualification. Running it needs the owner's approval of
-a fresh qualification (77 fake sends) and of the scenario's approval document.
+Executed once on 2026-11-23 (UTC) from revision `15e5da7c`, over a fresh owner-approved
+qualification at the same revision and an owner-approved scenario approval document
+([evidence record](../artifacts/evidence-s8-supplement-20261123/README.md)). The owner has not
+graded it.
 
 The owner also decided on 2026-11-22 to accept the existing unit regressions as coverage for a
 live episode that crosses a deployment change

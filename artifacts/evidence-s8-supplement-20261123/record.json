@@ -1,0 +1,535 @@
+{
+  "derived": {
+    "qualification": {
+      "activation_performed": false,
+      "campaign_allowance": 492,
+      "commands": [
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving prepare --run ~/.local/state/pixelgym/evidence/runs/s7-20261123-supplement/qualification --run-id s7-20261123-supplement --approval <text in review/qualification-approval.txt and plan.json> --expected-predecessor-sends 381 --predecessor-archive <v1-stopped,v2-stopped,v3,20261026-successor,20261027-s8driver,20261119-main>",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T18:30:13Z",
+          "git_status_entries": 0,
+          "log": "prepare-command.log",
+          "output": {
+            "fake_sends": 0,
+            "plan_sha256": "sha256:f0454e7e6db6e906120a8d58e426b65539db7159e9696b6a905a8a9bd0693e40"
+          },
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T18:29:09Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving qualify --run ~/.local/state/pixelgym/evidence/runs/s7-20261123-supplement/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T18:33:16Z",
+          "git_status_entries": 0,
+          "log": "qualify-command.log",
+          "output": {
+            "activation_performed": false,
+            "fake_sends": {
+              "qualification": 77
+            },
+            "packages": {
+              "A": {
+                "gate_overall_passed": true,
+                "gate_report_sha256": "sha256:3ef44eff96f4ea2a1d4b72a9e07fe5555ae3dc2fe6657f00022dd17acdea89ba",
+                "package_sha256": "sha256:adf7331563ad11868e34b5daff8695c418511bd27d0483601b1864c266982a74",
+                "policy_id": "sha256:7ac2476365cc2b81c6a46b17b6afa8488d9895e6c062f89d84c79253d10afb36",
+                "proposed_terms": {
+                  "deployment_attempt_cap": 4,
+                  "deployment_tier": "demo"
+                }
+              },
+              "B": {
+                "gate_overall_passed": true,
+                "gate_report_sha256": "sha256:a1239d8f567e5fc69251578561d436ec980baf4518588f626e97743048454cff",
+                "package_sha256": "sha256:5db9d09a407dc3ab1508c0214d8d3cd2f08e927183e2308d1cef7252c5b55817",
+                "policy_id": "sha256:760a252c523ad42570e7e85e253e9c21571122a9df420298c3b88eb8564cd31b",
+                "proposed_terms": {
+                  "deployment_attempt_cap": 24,
+                  "deployment_tier": "demo"
+                }
+              }
+            },
+            "publication_performed": false,
+            "real_provider_requests": 0,
+            "report_sha256": "sha256:289eb5523a7b9272cc18f5791a28c42437f87d11df7ebbebc333ef862f6fd658",
+            "verification_sha256": "sha256:0df3445a538a0f30c2780090743e151aa6dea4261a4a05858e6402f76948dbef"
+          },
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T18:30:19Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving verify --run ~/.local/state/pixelgym/evidence/runs/s7-20261123-supplement/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T18:35:04Z",
+          "git_status_entries": 0,
+          "log": "verify-command.log",
+          "output": {
+            "activation_performed": false,
+            "fake_sends": {
+              "qualification": 77
+            },
+            "publication_performed": false,
+            "real_provider_requests": 0,
+            "report_sha256": "sha256:289eb5523a7b9272cc18f5791a28c42437f87d11df7ebbebc333ef862f6fd658",
+            "verification_sha256": "sha256:0df3445a538a0f30c2780090743e151aa6dea4261a4a05858e6402f76948dbef"
+          },
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T18:33:25Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s7_serving report --run ~/.local/state/pixelgym/evidence/runs/s7-20261123-supplement/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T18:35:30Z",
+          "log": "report-command.log",
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T18:35:04Z",
+          "stderr_bytes": 0
+        }
+      ],
+      "gate_policy_sha256": "1058e81e30aab88fada7de193ae0a6b6131f713fa55b8f5e21f81ed32c00c7c6",
+      "ledger_sends": {
+        "qualification": 77
+      },
+      "packages": {
+        "A": {
+          "gate_report_sha256": "sha256:3ef44eff96f4ea2a1d4b72a9e07fe5555ae3dc2fe6657f00022dd17acdea89ba",
+          "package_sha256": "sha256:adf7331563ad11868e34b5daff8695c418511bd27d0483601b1864c266982a74",
+          "policy_id": "sha256:7ac2476365cc2b81c6a46b17b6afa8488d9895e6c062f89d84c79253d10afb36",
+          "stored_gate_overall_passed": true
+        },
+        "B": {
+          "gate_report_sha256": "sha256:a1239d8f567e5fc69251578561d436ec980baf4518588f626e97743048454cff",
+          "package_sha256": "sha256:5db9d09a407dc3ab1508c0214d8d3cd2f08e927183e2308d1cef7252c5b55817",
+          "policy_id": "sha256:760a252c523ad42570e7e85e253e9c21571122a9df420298c3b88eb8564cd31b",
+          "stored_gate_overall_passed": true
+        }
+      },
+      "plan_sha256": "sha256:f0454e7e6db6e906120a8d58e426b65539db7159e9696b6a905a8a9bd0693e40",
+      "predecessor_qualification_sends": [
+        0,
+        73,
+        77,
+        77,
+        77,
+        77
+      ],
+      "previous_qualification_sends": 381,
+      "publication_performed": false,
+      "qualification_allowance": 458,
+      "qualification_approval": "Owner approved in chat on 2026-11-23 a fresh S7 qualification at current main (15e5da7c96e0c96905a2c4af822cee9795a9aa70) for the S8 rollback-for-exhaustion supplement (rollback-exhaustion-supplement-v1). The agent asked: \"Approve a fresh S7 qualification at 15e5da7c (77 fake sends, no spend)?\" and the owner answered: \"Approve qualification\". Reason: the supplement needs its own sealed S7 qualification at the revision it runs from; the 2026-11-19 qualification at 578202a7 binds an earlier source revision and was consumed by the S8 rehearsal. This consumes 77 additional fake sends. Predecessors: v1 stopped (0 sends), v2 stopped (73), v3 completed (77), 20261026 successor completed (77), 20261027 s8driver completed (77), 20261119 main completed (77) = 381 prior sends. Cumulative qualification allowance 458 and campaign ceiling 492; A4, B24, smoke6 unchanged. Zero real-provider requests, zero spending, no automatic retry. Exact-package activation for the supplement, the supplement run itself, publication, and milestone decisions remain separate owner decisions.",
+      "real_provider_requests": 0,
+      "rendered_report_file_sha256": "cb6b9d5f3897217395d08e6f3a12372d5d3ac92cf6b0d0698f6e14a4c3c96bf5",
+      "report_sha256": "sha256:289eb5523a7b9272cc18f5791a28c42437f87d11df7ebbebc333ef862f6fd658",
+      "run_id": "s7-20261123-supplement",
+      "runtime": {
+        "distribution_count": 450,
+        "python": "3.12.16",
+        "runtime_lock_sha256": "sha256:beb1ef0aab488045e3f11b81bee58b3037cde3617728eb83b6248d8c445a6edd"
+      },
+      "seal_sha256": "sha256:4eeeeb210c9a98b44fabab6bb0ed428f1e6d50b7a48ec17ddfc07993fa14f68b",
+      "source_binding_sha256": "sha256:0df6c1847bf71f43c9320fca129366cd8482aab93b9182bb660fc9e4a4980943",
+      "source_revision": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+      "verification_sha256": "sha256:0df3445a538a0f30c2780090743e151aa6dea4261a4a05858e6402f76948dbef"
+    },
+    "retention": {
+      "backblaze_prefixes": {
+        "s7-20261123-supplement": {
+          "check_exit_status": 0,
+          "copy_command": "rclone copy ~/.local/state/pixelgym/evidence/archives/s7-20261123-supplement bb:<bucket>/s7-20261123-supplement --checksum --immutable --transfers 32",
+          "copy_exit_status": 0,
+          "copy_finished_utc": "2026-11-23T19:25:23Z",
+          "copy_started_utc": "2026-11-23T19:20:36Z",
+          "count_reconciliation": {
+            "archive_member_bytes": 3116807186,
+            "archive_member_files": 15969,
+            "expected_uploaded_bytes": 3120913095,
+            "expected_uploaded_files": 15970,
+            "manifest_json_bytes": 4105909,
+            "manifest_json_files": 1,
+            "observed_equals_expected": true
+          },
+          "differences": 0,
+          "file_retention_modes_observed": [
+            null
+          ],
+          "matching_files": 15970,
+          "observed_bytes": 3120913095,
+          "observed_file_count": 15970
+        },
+        "s8-20261123-supplement": {
+          "check_exit_status": 0,
+          "copy_command": "rclone copy ~/.local/state/pixelgym/evidence/archives/s8-20261123-supplement bb:<bucket>/s8-20261123-supplement --checksum --immutable --transfers 32",
+          "copy_exit_status": 0,
+          "copy_finished_utc": "2026-11-23T19:20:36Z",
+          "copy_started_utc": "2026-11-23T19:20:32Z",
+          "count_reconciliation": {
+            "archive_member_bytes": 1667144,
+            "archive_member_files": 134,
+            "expected_uploaded_bytes": 1694983,
+            "expected_uploaded_files": 135,
+            "manifest_json_bytes": 27839,
+            "manifest_json_files": 1,
+            "observed_equals_expected": true
+          },
+          "differences": 0,
+          "file_retention_modes_observed": [
+            null
+          ],
+          "matching_files": 135,
+          "observed_bytes": 1694983,
+          "observed_file_count": 135
+        }
+      },
+      "local_archives": {
+        "s7-20261123-supplement": {
+          "bytes": 3116807186,
+          "file_count": 15969,
+          "manifest_digest": "sha256:eb367f916bafcb7119b157947eeae5f7629d58a2adadbeb8dd176eba619d38bf",
+          "source_fingerprint": "sha256:60b5ad34d194cd24b34bb885514f989f1c9216ba064fa9d62d3da187fc50686e"
+        },
+        "s8-20261123-supplement": {
+          "bytes": 1667144,
+          "file_count": 134,
+          "manifest_digest": "sha256:f4aec1c175137ebffa7e315058ed119cae5a81fbe5f18a0130697c9d4ed9208a",
+          "source_fingerprint": "sha256:21be970de32449dfc9cfa51f4d63294ce6641eb95572aec8ebf2c95dea427282"
+        }
+      },
+      "object_lock_observation": {
+        "bucket_type": "allPrivate",
+        "default_retention": {
+          "mode": null,
+          "period": null
+        },
+        "file_retention_modes_observed": [
+          null
+        ],
+        "model_calls": 0,
+        "mutations": 0,
+        "object_lock_enabled": true,
+        "observed_bytes": 3122608078,
+        "observed_equals_both_prefixes": true,
+        "observed_file_count": 16105
+      }
+    },
+    "storage_estimate": {
+      "bucket_total_bytes_with_versions": 30791909040,
+      "bucket_total_objects_with_versions": 24738,
+      "estimated_monthly_charge_usd": 0.21,
+      "rate_is_operator_statement": true,
+      "storage_rate_usd_per_tb_month": 6.95
+    },
+    "supplement": {
+      "activation_performed": true,
+      "approval": {
+        "activation_approved": true,
+        "actor": "withheld",
+        "actor_verification_source": "legacy_unverified",
+        "approved_on_as_written": "11.23.26",
+        "publication_approved": false
+      },
+      "approval_sha256": "sha256:fb7e3d8ca6efb4f00c520bc1004536fb766bb65f05fb3caaa18e79a0edd91248",
+      "caller_transports": [
+        "loopback-listener:127.0.0.1:8765"
+      ],
+      "campaign_cap": 111,
+      "campaign_total": 104,
+      "commands": [
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal prepare --qualification ~/.local/state/pixelgym/evidence/runs/s7-20261123-supplement/qualification --state ~/.local/state/pixelgym/evidence/runs/s8-20261123-supplement/state --approval ~/.local/state/pixelgym/evidence/runs/s8-20261123-supplement/review/s8-approval.signed.json --scenario rollback-exhaustion-supplement-v1",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T19:12:14Z",
+          "git_status_entries": 0,
+          "log": "prepare-command.log",
+          "output": {
+            "fake_sends": 0,
+            "plan_sha256": "sha256:abfebde9a9a4138caa1c03c47e89464c43ef2143da8443a21b6b36752fddea0d"
+          },
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T19:11:26Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal run --state ~/.local/state/pixelgym/evidence/runs/s8-20261123-supplement/state --listener-port 8765",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T19:18:51Z",
+          "git_status_entries": 0,
+          "log": "run-command.log",
+          "output": {
+            "acceptance_exit_statuses": {
+              "stored_verification_replay": 0
+            },
+            "campaign_total": 104,
+            "fake_sends": {
+              "B": 24,
+              "qualification": 77,
+              "smoke": 3
+            },
+            "lifecycle_sha256": "sha256:6f0e50abfc1f97be33075d801a3fd2ad39299ed804852f50dadd6a5d2abe8555",
+            "milestone_verdict": null,
+            "publication_performed": false,
+            "qualification_seal_verified": true,
+            "real_provider_requests": 0,
+            "verification_sha256": "sha256:4f3af54f621e502f9d6f0254d923b809c82103d444019600c2fb298047a41f91"
+          },
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T19:12:20Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal verify --state ~/.local/state/pixelgym/evidence/runs/s8-20261123-supplement/state --qualification ~/.local/state/pixelgym/evidence/runs/s7-20261123-supplement/qualification",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T19:19:25Z",
+          "git_status_entries": 0,
+          "log": "verify-command.log",
+          "output": {
+            "campaign_total": 104,
+            "fake_sends": {
+              "B": 24,
+              "qualification": 77,
+              "smoke": 3
+            },
+            "lifecycle_sha256": "sha256:6f0e50abfc1f97be33075d801a3fd2ad39299ed804852f50dadd6a5d2abe8555",
+            "milestone_verdict": null,
+            "publication_performed": false,
+            "qualification_seal_verified": true,
+            "real_provider_requests": 0,
+            "verification_sha256": "sha256:4f3af54f621e502f9d6f0254d923b809c82103d444019600c2fb298047a41f91"
+          },
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T19:19:00Z",
+          "stderr_bytes": 0
+        },
+        {
+          "command": ".venv/bin/python -m scripts.s8_rehearsal report --state ~/.local/state/pixelgym/evidence/runs/s8-20261123-supplement/state",
+          "exit_status": 0,
+          "finished_utc": "2026-11-23T19:19:26Z",
+          "log": "report-command.log",
+          "source_head": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+          "started_utc": "2026-11-23T19:19:25Z",
+          "stderr_bytes": 0
+        }
+      ],
+      "driver_acceptance_checks": [
+        {
+          "elapsed_seconds": 27.584475,
+          "exit_status": 0,
+          "name": "stored_verification_replay"
+        }
+      ],
+      "driver_expected_sends": {
+        "A": 0,
+        "B": 24,
+        "smoke": 3
+      },
+      "evidence_label": "credential-free-scripted-engineering-validation",
+      "failure_record_present": false,
+      "ledger_sends": {
+        "B": 24,
+        "qualification": 77,
+        "smoke": 3
+      },
+      "lifecycle_elapsed_seconds": 311.266165,
+      "lifecycle_sha256": "sha256:6f0e50abfc1f97be33075d801a3fd2ad39299ed804852f50dadd6a5d2abe8555",
+      "lifecycle_steps": [
+        {
+          "elapsed_seconds": 46.236149,
+          "fake_sends_after": {
+            "qualification": 77
+          },
+          "name": "register_candidates",
+          "step": 1
+        },
+        {
+          "elapsed_seconds": 98.022759,
+          "fake_sends_after": {
+            "B": 24,
+            "qualification": 77,
+            "smoke": 1
+          },
+          "name": "approve_deploy_b_and_exhaust_cap",
+          "step": 2
+        },
+        {
+          "elapsed_seconds": 95.666609,
+          "fake_sends_after": {
+            "B": 24,
+            "qualification": 77,
+            "smoke": 2
+          },
+          "name": "approve_and_deploy_a",
+          "step": 3
+        },
+        {
+          "elapsed_seconds": 23.933529,
+          "fake_sends_after": {
+            "B": 24,
+            "qualification": 77,
+            "smoke": 3
+          },
+          "name": "rollback_selects_exhausted_b",
+          "step": 4
+        },
+        {
+          "elapsed_seconds": 0.149436,
+          "fake_sends_after": {
+            "B": 24,
+            "qualification": 77,
+            "smoke": 3
+          },
+          "name": "cleanup_and_final_pointer",
+          "step": 5
+        }
+      ],
+      "milestone_verdict": null,
+      "phase_caps": {
+        "A": 4,
+        "B": 24,
+        "qualification": 77,
+        "smoke": 6
+      },
+      "plan_expected_sends": {
+        "A": 0,
+        "B": 24,
+        "smoke": 3
+      },
+      "plan_sha256": "sha256:abfebde9a9a4138caa1c03c47e89464c43ef2143da8443a21b6b36752fddea0d",
+      "publication_performed": false,
+      "qualification_seal_verified": true,
+      "real_provider_requests": 0,
+      "rendered_report_file_sha256": "e78138e316ece7dc48bb0492cb570e88536806fb6a7e9e0f9e09e89ae2273ce2",
+      "rollback_target_before_request": {
+        "candidate_id": "candidate-760a252c523ad42570e7e85e",
+        "deployment_id": "deployment-485e07134566a37e66b4cef3",
+        "is_b": true
+      },
+      "rollback_toward_exhausted_B": {
+        "a_attempts_after": 0,
+        "active_pointer_after": {
+          "action": "deploy",
+          "candidate_id": "candidate-7ac2476365cc2b81c6a46b17",
+          "deployment_id": "deployment-2e5ee39f6b280d52c3a6df6c",
+          "generation": 2
+        },
+        "active_pointer_before": {
+          "action": "deploy",
+          "candidate_id": "candidate-7ac2476365cc2b81c6a46b17",
+          "deployment_id": "deployment-2e5ee39f6b280d52c3a6df6c",
+          "generation": 2
+        },
+        "audit": {
+          "candidate_id": "candidate-760a252c523ad42570e7e85e",
+          "error_class": "StatefulLoadError",
+          "event_type": "deployment.rollback_failed",
+          "stage": "preactivation",
+          "subject_id": "deployment-2e5ee39f6b280d52c3a6df6c"
+        },
+        "b_attempts_after": 24,
+        "b_attempts_before": 24,
+        "b_candidate_id": "candidate-760a252c523ad42570e7e85e",
+        "fake_sends_after": {
+          "B": 24,
+          "qualification": 77,
+          "smoke": 3
+        },
+        "fake_sends_before": {
+          "B": 24,
+          "qualification": 77,
+          "smoke": 2
+        },
+        "pointer_preserved": true,
+        "refusal": {
+          "error_class": "StatefulLoadError",
+          "message": "the deployment attempt cap for this exact version is already exhausted"
+        },
+        "selected_candidate_is_b": true,
+        "smoke_sends_consumed_by_refusal": 1
+      },
+      "run_id": "s8-20261123-supplement",
+      "scenario": "rollback-exhaustion-supplement-v1",
+      "seal_sha256": "sha256:1af0f9af13dace9f09c80042be2b94ad88615d16a9d997995ea763e7c2e4e3d1",
+      "source_revision": "15e5da7c96e0c96905a2c4af822cee9795a9aa70",
+      "verification_sha256": "sha256:4f3af54f621e502f9d6f0254d923b809c82103d444019600c2fb298047a41f91",
+      "version_attempts": {
+        "A": 0,
+        "B": 24
+      },
+      "worker_os_sandbox_required": true,
+      "worker_proofs": [
+        {
+          "event": "deploy B",
+          "mechanism": "darwin_sandbox_exec",
+          "os_sandbox_applied": true,
+          "profile_retained": true,
+          "profile_sha256": "sha256:a0a307a069b4f02f8a249aebc8b6acf0d834f14687f28dd95be68a7131cf1bd7",
+          "stored_profile_matches_digest": true
+        },
+        {
+          "event": "deploy A",
+          "mechanism": "darwin_sandbox_exec",
+          "os_sandbox_applied": true,
+          "profile_retained": true,
+          "profile_sha256": "sha256:f0a7def1858b35aee0984f9bbf47c78a049f6b73c1c727e7baa8e6e49da64ca3",
+          "stored_profile_matches_digest": true
+        }
+      ]
+    }
+  },
+  "generated_by": {
+    "operator_statements_file": "operator-statements.json",
+    "operator_statements_sha256": "7421d565b5ad1cd838cfab1d0397b6e9f46288cceaca4d37ff0cc65ee94f5ac8",
+    "script": "scripts/build_s8_supplement_record.py"
+  },
+  "milestone_verdict": null,
+  "operator_statements": {
+    "limits": [
+      "No restore drill was run on these copies. The rclone check and Object Lock listing compare the uploaded objects with the local archives; they do not restore and re-verify the runs.",
+      "All runs, archives and the verifier ran on one host from the working checkout at 15e5da7c, not in an isolated interpreter.",
+      "No Object Lock retention is applied to these prefixes; the listing shows no retention mode on any file. Applying retention needs separate owner approval.",
+      "Sandbox enforcement for the two workers is the launcher's own report. Their profile bytes are retained privately and verify against the recorded digests; the profiles contain local paths and are not checked in.",
+      "Real-provider requests and spending are 0 as declared constants of the fixture-only boundary, not independent network or billing measurements.",
+      "The audit actor in the control ledger is a string copied from the approval document, not an authenticated identity."
+    ],
+    "operator_observations": {
+      "backblaze_remote": "rclone ran with a b2 remote configured from environment variables loaded from the ignored .env for each command; no rclone config file was written and no credential was printed. The bucket name is not recorded here.",
+      "backblaze_storage": {
+        "rate_read_on": "2026-11-23",
+        "rate_source": "Backblaze B2 pricing page, pay-as-you-go storage; the page also states the first 10 GB of storage is free, which the estimate does not subtract",
+        "storage_rate_usd_per_tb_month": 6.95
+      },
+      "command_capture": "Each command's log (command, start and finish times, source head, Git status entry count, stdout JSON, exit status, stderr size) was written by a small shell wrapper in the agent's session scratchpad. The wrapper itself is not retained. Commands in the logs show local paths as ~ and the approval text as a reference.",
+      "upload_order": "Both runs were archived after report rendering, then copied: the S8 state first, then the S7 qualification."
+    },
+    "owner_decisions": [
+      {
+        "date": "2026-11-22",
+        "decision": "Close review finding 2 of the S8 rehearsal record (the refused rollback toward exhausted B was stopped by the lineage rule, not by exhaustion) with the narrow scenario rollback-exhaustion-supplement-v1.",
+        "id": 1,
+        "recorded_as": "artifacts/evidence-s8-rehearsal-20261119/README.md, finding 2; docs/s8-rehearsal.md"
+      },
+      {
+        "date": "2026-11-23",
+        "decision": "Approve a fresh S7 qualification at 15e5da7c for the supplement: 77 fake sends, no spend, six predecessors with 381 prior sends.",
+        "id": 2,
+        "recorded_as": "chat; the agent asked \"Approve a fresh S7 qualification at 15e5da7c (77 fake sends, no spend)?\" and the owner answered \"Approve qualification\". The full text is derived.qualification.qualification_approval."
+      },
+      {
+        "date": "2026-11-23",
+        "decision": "Have the agent fill in the scenario approval document for the owner's review.",
+        "id": 3,
+        "recorded_as": "chat; the owner wrote \"you fill it in, I'll revise and/or approve\". The agent copied actor from the owner's signed 2026-11-19 S8 approval and wrote approved_on as 11.23.26 in that document's format. No other field differs from the generated draft. The owner did not edit the file directly."
+      },
+      {
+        "date": "2026-11-23",
+        "decision": "Approve the filled scenario approval document as written and run the supplement.",
+        "id": 4,
+        "recorded_as": "chat; the owner answered \"Approve, run it\". The approved document is derived.supplement.approval_sha256."
+      }
+    ],
+    "schema_version": "pixelgym-s8-supplement-operator-statements-v1"
+  },
+  "schema_version": "pixelgym-s8-supplement-evidence-record-v1"
+}

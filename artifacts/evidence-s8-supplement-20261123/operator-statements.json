@@ -1,0 +1,47 @@
+{
+  "schema_version": "pixelgym-s8-supplement-operator-statements-v1",
+  "owner_decisions": [
+    {
+      "id": 1,
+      "date": "2026-11-22",
+      "decision": "Close review finding 2 of the S8 rehearsal record (the refused rollback toward exhausted B was stopped by the lineage rule, not by exhaustion) with the narrow scenario rollback-exhaustion-supplement-v1.",
+      "recorded_as": "artifacts/evidence-s8-rehearsal-20261119/README.md, finding 2; docs/s8-rehearsal.md"
+    },
+    {
+      "id": 2,
+      "date": "2026-11-23",
+      "decision": "Approve a fresh S7 qualification at 15e5da7c for the supplement: 77 fake sends, no spend, six predecessors with 381 prior sends.",
+      "recorded_as": "chat; the agent asked \"Approve a fresh S7 qualification at 15e5da7c (77 fake sends, no spend)?\" and the owner answered \"Approve qualification\". The full text is derived.qualification.qualification_approval."
+    },
+    {
+      "id": 3,
+      "date": "2026-11-23",
+      "decision": "Have the agent fill in the scenario approval document for the owner's review.",
+      "recorded_as": "chat; the owner wrote \"you fill it in, I'll revise and/or approve\". The agent copied actor from the owner's signed 2026-11-19 S8 approval and wrote approved_on as 11.23.26 in that document's format. No other field differs from the generated draft. The owner did not edit the file directly."
+    },
+    {
+      "id": 4,
+      "date": "2026-11-23",
+      "decision": "Approve the filled scenario approval document as written and run the supplement.",
+      "recorded_as": "chat; the owner answered \"Approve, run it\". The approved document is derived.supplement.approval_sha256."
+    }
+  ],
+  "operator_observations": {
+    "backblaze_storage": {
+      "storage_rate_usd_per_tb_month": 6.95,
+      "rate_read_on": "2026-11-23",
+      "rate_source": "Backblaze B2 pricing page, pay-as-you-go storage; the page also states the first 10 GB of storage is free, which the estimate does not subtract"
+    },
+    "command_capture": "Each command's log (command, start and finish times, source head, Git status entry count, stdout JSON, exit status, stderr size) was written by a small shell wrapper in the agent's session scratchpad. The wrapper itself is not retained. Commands in the logs show local paths as ~ and the approval text as a reference.",
+    "backblaze_remote": "rclone ran with a b2 remote configured from environment variables loaded from the ignored .env for each command; no rclone config file was written and no credential was printed. The bucket name is not recorded here.",
+    "upload_order": "Both runs were archived after report rendering, then copied: the S8 state first, then the S7 qualification."
+  },
+  "limits": [
+    "No restore drill was run on these copies. The rclone check and Object Lock listing compare the uploaded objects with the local archives; they do not restore and re-verify the runs.",
+    "All runs, archives and the verifier ran on one host from the working checkout at 15e5da7c, not in an isolated interpreter.",
+    "No Object Lock retention is applied to these prefixes; the listing shows no retention mode on any file. Applying retention needs separate owner approval.",
+    "Sandbox enforcement for the two workers is the launcher's own report. Their profile bytes are retained privately and verify against the recorded digests; the profiles contain local paths and are not checked in.",
+    "Real-provider requests and spending are 0 as declared constants of the fixture-only boundary, not independent network or billing measurements.",
+    "The audit actor in the control ledger is a string copied from the approval document, not an authenticated identity."
+  ]
+}

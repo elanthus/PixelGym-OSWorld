@@ -72,7 +72,9 @@ Since 2026-11-22 the driver also keeps the exact sandbox profile each worker ran
 Darwin launcher hands the profile text to the driver, which stores it in the private state
 directory as `worker-profiles/<sha256>.sb` and records `profile_retained` on the worker event.
 `verify` checks every stored profile against the digest its event recorded, and refuses a missing,
-altered, or unreferenced profile. Profiles contain local paths, so only the digest belongs in a
+altered, or unreferenced profile, a malformed digest, and an entry that is not a regular file. When
+the run required the OS sandbox, `verify` also refuses a worker event whose profile was not
+retained. Profiles contain local paths, so only the digest belongs in a
 public record. The November rehearsal predates this: its five digests survive and its profile
 bytes were never captured. A worker that preparation starts and then discards, such as the one
 behind a refused redeploy or rollback, is not the active worker and leaves no proof or profile.
@@ -104,13 +106,17 @@ capacity left. Repeating that sequence cannot separate the two causes. The owner
 3. Approve and explicitly deploy A. The newest row is then a deploy of A, so the earlier deploy of
    B is the eligible rollback target. The step records that target before any rollback.
 4. Request a rollback. Preparation selects B, sends its contract smoke, and refuses because B's cap
-   is exhausted. The step records B's candidate ID, the `StatefulLoadError`, the
-   `deployment.rollback_failed` audit event naming B, A's unchanged deployment ID, B's unchanged
+   is exhausted. The step records B's candidate ID, the `StatefulLoadError` and its exhaustion
+   message, the `deployment.rollback_failed` audit event naming B, A's unchanged deployment ID, B's unchanged
    count of 24, and the smoke sends before and after.
 5. Stop everything; the final pointer still selects A.
 
 Expected durable sends: qualification 77, B 24, smoke 3 (deploy B, deploy A, and the refused
 rollback's preparation), A 0; total 104 of the 111 campaign cap.
+
+The preparer raises `StatefulLoadError` for several causes, including a worker that fails to start
+and a failed readiness reset, and the audit row keeps no message for that class. The step and
+`verify` therefore also require the cap-exhaustion message recorded in the sealed lifecycle.
 
 `prepare --scenario rollback-exhaustion-supplement-v1` writes a plan that names the scenario, and
 it requires an owner approval document with a matching `scenario` field. The full rehearsal's

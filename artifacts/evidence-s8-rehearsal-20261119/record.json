@@ -141,6 +141,139 @@
     "steps_file": "recovery-check-steps.jsonl",
     "verify_digests_match_original": true
   },
+  "recovery_drill_20261122": {
+    "b2": {
+      "exit_statuses": {
+        "control-original-s7-blocked": 1,
+        "control-original-s8-blocked": 1,
+        "control-working-checkout-blocked": 1,
+        "download-s7": 0,
+        "download-s8": 0,
+        "negative-absent-qualification": 1,
+        "negative-different-qualification": 1,
+        "observe-plain-verify-without-qualification": 1,
+        "restore-s7": 0,
+        "restore-s8": 0,
+        "s7-bundle-verify": 0,
+        "s8-recovery-verify": 0,
+        "s8-report": 0
+      },
+      "expected_nonzero_all_nonzero": true,
+      "expected_zero_all_zero": true,
+      "step_count": 13,
+      "steps_file": "recovery-drill-20261122/b2-steps.jsonl"
+    },
+    "campaign_sends": 0,
+    "code_location": "a separate clone outside the working checkout",
+    "code_revision": "aa12bfa9c1f1aec64e08a5d2f85134009971d423",
+    "isolation": {
+      "controls": "ls of the original S8 state, the original S7 qualification, and the working checkout's scripts directory each exited nonzero inside the sandbox",
+      "denied_in_b2_drill_also": [
+        "evidence/archives (local archives)"
+      ],
+      "denied_in_both": [
+        "the working checkout",
+        "evidence/runs (original S7 and S8 run directories)",
+        "evidence/restores (earlier restores)",
+        "evidence-backup"
+      ],
+      "mechanism": "sandbox-exec, allow-default profile with a deny list for file-read* and file-write*",
+      "sandbox_profile_sha256": {
+        "b2": "6225963f7b1aa89dd9ebcf72521ae8668202ce94a1ecf5d041f5bf77f41f0cb7",
+        "local": "be50034ea5899bbcc3f35cbef3a51f9899deefc7f598e67e0465371db4281af4"
+      }
+    },
+    "limits": [
+      "same host as the rehearsal",
+      "the Backblaze downloads ran outside the sandbox and read credentials from the working checkout's .env",
+      "the clone was taken from the working checkout's Git repository and the virtualenv packages were copied from the working virtualenv before the sandboxed steps",
+      "the sandbox profile is allow-default with a deny list, not deny-default",
+      "the S8 verifier is the amended command at the code revision above, not the verifier frozen at the rehearsal revision; the S7 verifier is the bundle's own frozen code",
+      "the drill script and sandbox profiles contain local paths and are retained privately, with digests in the raw output"
+    ],
+    "local": {
+      "exit_statuses": {
+        "control-original-s7-blocked": 1,
+        "control-original-s8-blocked": 1,
+        "control-working-checkout-blocked": 1,
+        "negative-absent-qualification": 1,
+        "negative-different-qualification": 1,
+        "observe-plain-verify-without-qualification": 1,
+        "restore-s7": 0,
+        "restore-s8": 0,
+        "s7-bundle-verify": 0,
+        "s8-recovery-verify": 0,
+        "s8-report": 0
+      },
+      "expected_nonzero_all_nonzero": true,
+      "expected_zero_all_zero": true,
+      "step_count": 11,
+      "steps_file": "recovery-drill-20261122/local-steps.jsonl"
+    },
+    "negative_controls": {
+      "absent_qualification": "nonzero: the S7 qualification directory given for recovery is absent",
+      "different_internally_valid_qualification": "nonzero: the S7 qualification seal differs from the digest in the S8 plan (the nested 2026-10-27 predecessor qualification was passed)",
+      "plain_verify_without_qualification": "observed nonzero: PermissionError reading the original path recorded in the S8 plan"
+    },
+    "outputs_identical_across_drills": true,
+    "purpose": "repeat the local-archive and Backblaze restores with the original run directories and the working checkout inaccessible, and require the restored S7 qualification explicitly",
+    "python_environment": "a new virtualenv on the same Homebrew Python 3.12.16, with site-packages copied from the working virtualenv except torch, sympy, mpmath and the editable pixelgym link",
+    "raw_output": {
+      "backblaze_bytes": 71873,
+      "backblaze_files": 60,
+      "backblaze_prefix": "s8-recovery-drill-20261122",
+      "bucket_total_bytes_with_versions": 27669300962,
+      "check_exit_status": 0,
+      "copy_exit_status": 0,
+      "each_step_records": "stdout_sha256 and stderr_sha256 in the steps files",
+      "estimated_monthly_charge_usd": 0.19,
+      "location": "private; stdout and stderr of every step, the drill script and both sandbox profiles",
+      "rclone_check_differences": 0,
+      "storage_rate_read_on": "2026-11-19",
+      "storage_rate_usd_per_tb_month": 6.95
+    },
+    "s7_verifier": {
+      "file": "recovery-drill-20261122/verify_s7_bundle.py.txt",
+      "how": "env -i, python -I -B; imports pixelgym and scripts only from the restored bundle's own source snapshot after checking it against source-binding.json",
+      "output": {
+        "activation_performed": false,
+        "archived_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+        "fake_sends": {
+          "qualification": 77
+        },
+        "imports_resolved_under_bundle_source": true,
+        "inspection_unchanged": true,
+        "publication_performed": false,
+        "real_provider_requests": 0,
+        "rendered_report_sha256": "f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f",
+        "report_sha256": "sha256:b5d9bef64c1a38ec717ecb06834c939ca39d047c9d3b06a402a76d52e6faa7fa",
+        "seal_sha256": "sha256:ac3f78a8e926a9088369ed6b561d38c236adfd31d23e678e07b84bff4228105e",
+        "source_binding_sha256": "sha256:9c42055b2909785e26152991bf63e39f547dd7af7dc64b80f99512dbe54afee6",
+        "source_revision": "578202a798459368eaf17c16cd6c1b1a0f756af5",
+        "verification_sha256": "sha256:bbb678695b71981a27c6e651d341a2bd5e9bc32c7f4afe8457c5ba196af7250f"
+      },
+      "sha256": "337b7b1fb8dc4d0d6bd1ed8c90a27ccfe8d0efccd779221698d00864e441e05a"
+    },
+    "s8_verifier": {
+      "command": "scripts.s8_rehearsal verify --state <restored S8 state> --qualification <restored S7 qualification>",
+      "output": {
+        "campaign_total": 109,
+        "fake_sends": {
+          "A": 2,
+          "B": 24,
+          "qualification": 77,
+          "smoke": 6
+        },
+        "lifecycle_sha256": "sha256:87cae41c845f7c6daf79ccfc0fee04504c9acae99434916990c1a19c99c25777",
+        "milestone_verdict": null,
+        "publication_performed": false,
+        "qualification_seal_verified": true,
+        "real_provider_requests": 0,
+        "verification_sha256": "sha256:fc4c89e8d38c8a0d8e54ea694d2976bee0526ac9619aad305e459e128223c683"
+      },
+      "report_sha256_rendered_and_archived": "d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1"
+    }
+  },
   "rehearsal": {
     "approval": {
       "activation_approved": true,
@@ -360,6 +493,16 @@
       "finding": "approved_on in the approval document reads 11.19.26; the run state lives outside the repository because the driver refuses an in-checkout path while AGENTS.md section 7 asks for a git-ignored path inside it; the 2026-10-27 qualification (77 sends) was never used",
       "id": 7,
       "status": "confirmed; disclosed"
+    },
+    {
+      "finding": "the frozen S8 verifier reads the original S7 path from the sealed plan; an absent directory exits 0 with qualification_seal_verified null and a different valid qualification printed false and exited 0",
+      "id": 8,
+      "status": "confirmed; verify now takes --qualification and raises on absence or mismatch, plain verify raises on mismatch; drills repeated with originals and working checkout blocked, see recovery_drill_20261122"
+    },
+    {
+      "finding": "the run command exited 0 even when its acceptance subprocess exited nonzero",
+      "id": 9,
+      "status": "confirmed; run now exits nonzero in that case"
     }
   ],
   "runtime": {

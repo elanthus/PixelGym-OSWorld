@@ -9,6 +9,7 @@ real loopback listener.
 from __future__ import annotations
 
 import json
+import shutil
 import socket
 import sqlite3
 from contextlib import closing
@@ -24,7 +25,7 @@ from pixelgym.platform import s7_runtime, s7_source, s8_rehearsal
 from pixelgym.platform.s7_budget import S7SendBudget
 from pixelgym.platform.s7_evidence import inventory, verify_seal
 from pixelgym.platform.s7_policy import POLICY_SHA256, policy_document
-from pixelgym.platform.s7_qualification import read_json
+from pixelgym.platform.s7_qualification import read_json, seal
 from pixelgym.platform.s7_source import write_json
 from pixelgym.platform.s8_rehearsal import (
     APPROVAL_SCHEMA,
@@ -592,6 +593,108 @@ def test_verify_leaves_the_directory_unchanged_and_detects_drift(
     with pytest.raises(ValueError, match="stored semantic verification differs"):
         cli.verify(rehearsed.state)
     assert inventory(rehearsed.state) == before
+
+
+def different_sealed_qualification(source: Path, directory: Path) -> Path:
+    """A sealed, internally valid qualification that is not the one the S8 plan binds."""
+    other = directory / "other-qualification"
+    shutil.copytree(source, other)
+    plan = dict(read_json(other / "plan.json"))
+    plan["run_id"] = "a-different-qualification"
+    (other / "plan.json").unlink()
+    write_json(other / "plan.json", plan)
+    (other / "seal.json").unlink()
+    seal(other)
+    verify_seal(other)
+    return other
+
+
+def test_recovery_verify_requires_the_given_qualification_and_its_seal(
+    rehearsed: SimpleNamespace, tmp_path: Path
+) -> None:
+    before = inventory(rehearsed.state)
+    with no_network():
+        result = cli.verify(rehearsed.state, rehearsed.qualification)
+    assert result["qualification_seal_verified"] is True
+
+    with pytest.raises(ValueError, match="given for recovery is absent"):
+        cli.verify(rehearsed.state, tmp_path / "missing-qualification")
+
+    other = different_sealed_qualification(rehearsed.qualification, tmp_path)
+    with pytest.raises(ValueError, match="seal differs from the digest in the S8 plan"):
+        cli.verify(rehearsed.state, other)
+    assert inventory(rehearsed.state) == before
+
+
+def test_verify_refuses_a_different_qualification_at_the_planned_path(
+    rehearsed: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    other = different_sealed_qualification(rehearsed.qualification, tmp_path)
+    original = cli.read_json
+
+    def redirected(path: Path) -> Any:
+        value = original(path)
+        if path == rehearsed.state / "plan.json":
+            value = {**value, "qualification_path": str(other)}
+        return value
+
+    monkeypatch.setattr(cli, "read_json", redirected)
+    with pytest.raises(ValueError, match="seal differs from the digest in the S8 plan"):
+        cli.verify(rehearsed.state)
+
+    absent = {"path": str(tmp_path / "gone")}
+
+    def redirected_absent(path: Path) -> Any:
+        value = original(path)
+        if path == rehearsed.state / "plan.json":
+            value = {**value, "qualification_path": absent["path"]}
+        return value
+
+    monkeypatch.setattr(cli, "read_json", redirected_absent)
+    assert cli.verify(rehearsed.state)["qualification_seal_verified"] is None
+
+
+def test_cli_verify_accepts_an_explicit_qualification_and_fails_when_it_is_absent(
+    rehearsed: SimpleNamespace,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base = ["s8_rehearsal", "verify", "--state", str(rehearsed.state), "--qualification"]
+    monkeypatch.setattr("sys.argv", [*base, str(rehearsed.qualification)])
+    cli.main()
+    assert json.loads(capsys.readouterr().out)["qualification_seal_verified"] is True
+    monkeypatch.setattr("sys.argv", [*base, str(tmp_path / "missing")])
+    with pytest.raises(ValueError, match="given for recovery is absent"):
+        cli.main()
+
+
+def test_run_exits_nonzero_when_an_acceptance_command_failed(
+    rehearsed: SimpleNamespace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    class _Finished:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        def run(self) -> dict[str, Any]:
+            return dict(rehearsed.lifecycle)
+
+    failing = {"checks": [{"name": "stored_verification_replay", "exit_status": 3}]}
+    monkeypatch.setattr(cli, "Rehearsal", _Finished)
+    monkeypatch.setattr(cli, "finalize", lambda root, state: failing)
+    monkeypatch.setattr("sys.argv", ["s8_rehearsal", "run", "--state", str(rehearsed.state)])
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 1
+    printed = json.loads(capsys.readouterr().out)
+    assert printed["acceptance_exit_statuses"] == {"stored_verification_replay": 3}
+
+    passing = {"checks": [{"name": "stored_verification_replay", "exit_status": 0}]}
+    monkeypatch.setattr(cli, "finalize", lambda root, state: passing)
+    cli.main()
+    assert json.loads(capsys.readouterr().out)["acceptance_exit_statuses"] == {
+        "stored_verification_replay": 0
+    }
 
 
 def test_acceptance_checks_record_raw_command_status_and_output(

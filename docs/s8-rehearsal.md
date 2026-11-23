@@ -24,8 +24,8 @@ retains screenshots, backend checkpoints, and a dispatch ledger for independent 
 | Command | Does | Refuses |
 | --- | --- | --- |
 | `prepare --qualification Q --state S --approval A.json [--source ROOT]` | Verifies the sealed qualification and its packages; verifies the owner approval document against the exact sealed packages, gate reports, and demo caps; creates `S` outside Git; copies the sealed send ledger with SQLite's backup API and verifies the copy (integrity, logical identity, 77 paused qualification sends); writes `plan.json`, `approval.json`, `ledger-backup.json` | An existing or in-checkout state directory; a qualification inside Git, unsealed, stopped, or with changed packages; an approval whose digests, caps, tier, actor, or activation flag differ; an approval that approves publication |
-| `run --state S [--source ROOT] [--listener-port N]` | Binds the approval digest to the ledger (`resume_after_owner_review`), then executes the seven steps once; writes `lifecycle.json`, `verification.json`, `acceptance-checks.json`, and `seal.json`; cleans up workers, caller environments, service writers, and stores in `finally` | A second run of the same state (counts are never reset); a changed qualification seal, approval, host source, or installed runtime; any step whose frozen expectation fails (the campaign stops with `failure.json` sealed) |
-| `verify --state S` | Recomputes the semantic verification from stored bytes (hashes, SQLite integrity, stored-action replay, recovery, cap, and rollback inspection) and compares it with `verification.json`; leaves the directory unchanged | Any drift between stored and recomputed verification; a broken seal |
+| `run --state S [--source ROOT] [--listener-port N]` | Binds the approval digest to the ledger (`resume_after_owner_review`), then executes the seven steps once; writes `lifecycle.json`, `verification.json`, `acceptance-checks.json`, and `seal.json`; cleans up workers, caller environments, service writers, and stores in `finally` | A second run of the same state (counts are never reset); a changed qualification seal, approval, host source, or installed runtime; any step whose frozen expectation fails (the campaign stops with `failure.json` sealed). Exits nonzero when an acceptance command it ran exited nonzero |
+| `verify --state S [--qualification Q]` | Recomputes the semantic verification from stored bytes (hashes, SQLite integrity, stored-action replay, recovery, cap, and rollback inspection) and compares it with `verification.json`; leaves the directory unchanged. With `--qualification Q`, a recovery check: requires the restored S7 qualification `Q` and that its seal equals the digest in the S8 plan | Any drift between stored and recomputed verification; a broken seal; an S7 seal that differs from the digest in the plan; with `--qualification`, an absent directory |
 | `report --state S` | Renders the stored lifecycle, verification, and acceptance records; constructs no policy, transport, server, backend, or network client | A broken seal or an unbound verification record |
 
 There is no activation, approval, deployment, publication, archive, or LFS command. Candidate
@@ -79,6 +79,19 @@ sockets may bind, connect, or send datagrams only to the literals `127.0.0.1` an
 before the system call, and host names (including `localhost`) are refused so no resolver is
 consulted. Both guards are in-process Python guards on the driver, not an OS boundary; the
 policy worker's OS sandbox and egress proxy are the enforced boundary either way.
+
+## Recovery verification
+
+A sealed S8 plan records the absolute path of the S7 qualification it consumed. Plain `verify`
+reads that path. If the directory is absent it reports `qualification_seal_verified: null` and
+still exits 0, so on its own it cannot show that a restored copy is complete. Until 2026-11-22 a
+qualification with a different seal at that path was reported as `false` and also exited 0; it now
+raises.
+
+For a recovery check, restore the S7 qualification and the S8 state into new directories and run
+`verify --state S --qualification Q`. The command then ignores the recorded path. It exits nonzero
+when `Q` is absent, when its seal is broken, or when its seal differs from the digest in the S8
+plan.
 
 ## Evidence layout
 

@@ -88,6 +88,52 @@ code and the stored evidence. The sealed rehearsal state is unchanged.
 6. **Step 6 of the driver compares B's attempt count with a literal 24** instead of the plan's
    cap. The code is unchanged here.
 
+## Recovery drill, 2026-11-22
+
+A second owner-side review found that the frozen S8 verifier reads the S7 qualification from the
+original path recorded in the sealed plan. An absent directory left
+`qualification_seal_verified: null` with exit status 0, and a different, internally valid
+qualification printed `false` with exit status 0. The 2026-11-20 restores therefore did not show
+that the restored copies stand on their own. The review also found that `run` exited 0 when its
+acceptance command had failed.
+
+`scripts.s8_rehearsal verify` now takes `--qualification` and raises when that directory is
+absent or its seal differs from the digest in the S8 plan. `run` exits nonzero when an acceptance
+command failed. Both restores were then repeated with no campaign sends:
+
+- **Isolation.** Each step ran under `sandbox-exec` with the working checkout, the original run
+  directories, the earlier restores, and the evidence backup denied for reading and writing. The
+  Backblaze drill also denied the local archives. Listing the original S8 state, the original S7
+  qualification, and the working checkout each exited nonzero inside the sandbox.
+- **Code.** The S8 verifier ran from a separate clone at `aa12bfa9` with a separate virtualenv.
+  The S7 verifier ran with `env -i` and `python -I -B` and imported `pixelgym` and `scripts` only
+  from the restored bundle's own source snapshot, after checking it against
+  `source-binding.json` ([`verify_s7_bundle.py.txt`](recovery-drill-20261122/verify_s7_bundle.py.txt)).
+- **Results.** [`local-steps.jsonl`](recovery-drill-20261122/local-steps.jsonl) holds 11 steps and
+  [`b2-steps.jsonl`](recovery-drill-20261122/b2-steps.jsonl) holds 13. Every step expected to exit
+  0 did so, and every step expected to exit nonzero did so. The verification, lifecycle, and seal
+  digests equal the original run's, and the two drills' verifier outputs are byte-identical. The
+  re-rendered S8 report and the archived one share SHA-256
+  `d3a1d99b28cea8fd30214599e526a927efcab63ec8bc2804b40e8f06cfaaa2b1`; the S7 report's is
+  `f911d7647db483ed940f43d79cd5ebdeb7f4b3ef176eb3e8f84d553d9d2ba83f`.
+- **Negative controls.** An absent qualification directory and the nested 2026-10-27 predecessor
+  qualification (sealed and valid, but not the one the plan binds) each exited nonzero. Plain
+  `verify` without `--qualification` also exited nonzero, with a permission error on the original
+  path.
+- **Raw output.** Each step's stdout and stderr are retained privately with their SHA-256 in the
+  step files, and copied to the Backblaze prefix `s8-recovery-drill-20261122` (60 files,
+  `rclone check` 0 differences).
+
+Limits of the drill: it ran on the same host. The Backblaze downloads ran outside the sandbox and
+read credentials from the working checkout. The clone and the virtualenv packages were copied
+from the working checkout before the sandboxed steps. The sandbox profile is allow-default with a
+deny list. The S8 verifier is the amended command, not the one frozen at the rehearsal revision.
+In `b2-steps.jsonl`, the drill script's bucket-name redaction also replaced part of the checkout
+path in the `control-working-checkout-blocked` command; the command that ran is the one recorded
+for the same control in `local-steps.jsonl`. Both files are byte copies of the private logs and
+are left as written.
+The owner grades whether this meets the recovery check.
+
 ## Limits
 
 - The owner has not graded S8.

@@ -360,7 +360,8 @@ Run this single ordered lifecycle in an isolated persistent state directory outs
    rollback lineage rule before preparation ran, so it did not show the exhaustion check; the
    separate redeploy did. The owner chose a
    [narrow supplemental scenario](s8-rehearsal.md#rollback-for-exhaustion-supplement) in which
-   exhausted B is the eligible rollback target. It is implemented and not yet executed. For a live
+   exhausted B is the eligible rollback target. It was executed once on 2026-11-23 (UTC)
+   ([evidence record](../artifacts/evidence-s8-supplement-20261123/README.md)). For a live
    episode from an older deployment (step 5), the owner accepts the existing unit regressions as
    coverage, as an explicit exception to integrated evidence.
 7. Stop workers, caller environments, service writers, and stores in `finally` cleanup; preserve

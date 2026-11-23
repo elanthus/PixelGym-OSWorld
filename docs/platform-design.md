@@ -172,7 +172,7 @@ latency, cost, and redaction, and a second approval before any full run.
 | S5: credential-free policy subprocess with local egress-denial proof | Delivered (`pixelgym/platform/policy_subprocess.py`) |
 | S6: control-plane wiring and kind-aware runtime | Delivered (`pixelgym/platform/stateful_control.py`, `pixelgym/platform/stateful_runtime.py`) |
 | S7: scripted gate policy, package qualification, and evidence tooling | Implemented; exact-package activation remains owner-gated |
-| S8: full serving rehearsal and human gate | Driver implemented (`pixelgym/platform/s8_rehearsal.py`, `scripts/s8_rehearsal.py`, [design](s8-rehearsal.md)); rehearsal executed once on 2026-11-20 (UTC) at `578202a7` ([evidence record](../artifacts/evidence-s8-rehearsal-20261119/README.md)); human gate not graded. A [rollback-for-exhaustion supplement](s8-rehearsal.md#rollback-for-exhaustion-supplement) is implemented and not executed |
+| S8: full serving rehearsal and human gate | Driver implemented (`pixelgym/platform/s8_rehearsal.py`, `scripts/s8_rehearsal.py`, [design](s8-rehearsal.md)); rehearsal executed once on 2026-11-20 (UTC) at `578202a7` ([evidence record](../artifacts/evidence-s8-rehearsal-20261119/README.md)); human gate not graded. A [rollback-for-exhaustion supplement](s8-rehearsal.md#rollback-for-exhaustion-supplement) was executed once on 2026-11-23 (UTC) at `15e5da7c` ([evidence record](../artifacts/evidence-s8-supplement-20261123/README.md)) and is not graded |
 
 Known limitations: single-user local control plane; provider aliases can drift; write-once
 retention protects versions but not availability; one synthetic form cannot establish general

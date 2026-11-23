@@ -191,7 +191,9 @@ def _require(condition: bool, message: str) -> None:
 # Sections ------------------------------------------------------------------------------------
 
 
-def qualification(inputs: Inputs) -> dict[str, Any]:
+def qualification(
+    inputs: Inputs, qualify_stdout: str = "qualification.stdout.json"
+) -> dict[str, Any]:
     run, logs = inputs.s7_run / "qualification", inputs.s7_run / "review/command-logs"
     plan, lock = _json(run / "plan.json"), _json(run / "runtime-lock.json")
     _require(
@@ -199,7 +201,7 @@ def qualification(inputs: Inputs) -> dict[str, Any]:
         "S7 runtime lock differs from the digest its plan binds",
     )
     binding, accounting = _json(run / "source-binding.json"), plan["cumulative_accounting"]
-    qualify_output = _json(logs / "qualification.stdout.json")
+    qualify_output = _json(logs / qualify_stdout)
     verify = command_log(logs / "verify-command.log")
     verification_sha256 = content_digest(_json(run / "verification.json"))
     counts = ledger_counts(run / "send-budget.sqlite")

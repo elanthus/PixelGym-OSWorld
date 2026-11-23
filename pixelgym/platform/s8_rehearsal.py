@@ -19,10 +19,11 @@ from __future__ import annotations
 import base64
 import io
 import json
+import re
 import shutil
 import sqlite3
 import time
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -94,6 +95,8 @@ VERIFICATION_SCHEMA = "pixelgym-s8-verification-v1"
 CHECKS_SCHEMA = "pixelgym-s8-acceptance-checks-v1"
 REPORT_SCHEMA = "pixelgym-s8-review-report-v1"
 INTERRUPTION_BOUNDARY = "canonical_response_persisted"
+PROFILE_DIRECTORY = "worker-profiles"
+_PROFILE_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 EXPECTED_SENDS = {"A": 2, "B": 24, "smoke": 6}
 STEP_NAMES = (
     "register_and_refuse_unapproved_b",
@@ -114,8 +117,15 @@ class RehearsalStopped(RuntimeError):
 # Approval binding ---------------------------------------------------------------------------
 
 
-def bind_approval(qualification: Path, document: Mapping[str, Any]) -> dict[str, Any]:
-    """Verify an owner-supplied approval against the sealed qualification; never invent one."""
+def bind_approval(
+    qualification: Path, document: Mapping[str, Any], *, scenario: str | None = None
+) -> dict[str, Any]:
+    """Verify an owner-supplied approval against the sealed qualification; never invent one.
+
+    A supplemental scenario needs an approval that names it in a ``scenario`` field. The
+    full rehearsal's approval has no such field, so neither approval can stand in for the
+    other.
+    """
     required = {
         "schema_version",
         "actor",
@@ -127,8 +137,12 @@ def bind_approval(qualification: Path, document: Mapping[str, Any]) -> dict[str,
         "activation_approved",
         "publication_approved",
     }
+    if scenario is not None:
+        required.add("scenario")
     if not isinstance(document, Mapping) or set(document) != required:
         raise ValueError("S8 approval document fields differ from the approval schema")
+    if scenario is not None and document["scenario"] != scenario:
+        raise ValueError("S8 approval names a different scenario")
     if document["schema_version"] != APPROVAL_SCHEMA:
         raise ValueError("unsupported S8 approval schema")
     if document["activation_approved"] is not True or document["publication_approved"] is not False:
@@ -213,8 +227,21 @@ def ledger_state(path: Path) -> tuple[dict[str, int], dict[str, Any]]:
 # Preparation --------------------------------------------------------------------------------
 
 
-def prepare(root: Path, qualification: Path, state: Path, *, approval_path: Path) -> dict[str, Any]:
-    """Create the isolated state directory, verified ledger backup, and approval binding."""
+def prepare(
+    root: Path,
+    qualification: Path,
+    state: Path,
+    *,
+    approval_path: Path,
+    scenario: str | None = None,
+    expected_sends: Mapping[str, int] | None = None,
+    lifecycle_steps: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """Create the isolated state directory, verified ledger backup, and approval binding.
+
+    ``scenario`` selects a supplemental lifecycle; its plan records the scenario name, its
+    own expected sends, and its own step names. The full rehearsal passes none of these.
+    """
     qualification, state = qualification.resolve(), state.resolve()
     if state.exists() or _checkout(state) is not None:
         raise ValueError("new private S8 state directory outside Git is required")
@@ -226,7 +253,7 @@ def prepare(root: Path, qualification: Path, state: Path, *, approval_path: Path
     verify_seal(qualification)
     verify_packages(qualification)
     document = json.loads(approval_path.read_bytes())
-    binding = bind_approval(qualification, document)
+    binding = bind_approval(qualification, document, scenario=scenario)
     plan_q = read_json(qualification / "plan.json")
     source = read_json(qualification / "source-binding.json")
     lock = read_json(qualification / "runtime-lock.json")
@@ -268,13 +295,15 @@ def prepare(root: Path, qualification: Path, state: Path, *, approval_path: Path
             "golden_action_count": len(plan_q["actions"]["B"]),
             "phase_caps": policy["phase_caps"],
             "campaign_cap": policy["campaign_cap"],
-            "expected_sends": EXPECTED_SENDS,
+            "expected_sends": dict(EXPECTED_SENDS if expected_sends is None else expected_sends),
             "interruption_boundary": INTERRUPTION_BOUNDARY,
-            "lifecycle_steps": list(STEP_NAMES),
+            "lifecycle_steps": list(STEP_NAMES if lifecycle_steps is None else lifecycle_steps),
             "activation_approved": True,
             "publication_approved": False,
             "real_provider_cap": 0,
         }
+        if scenario is not None:
+            plan["scenario"] = scenario
         write_json(state / "plan.json", plan)
     except BaseException:
         # The directory did not exist before this call. A failure after creating it, for
@@ -609,6 +638,8 @@ def _error(exc: BaseException) -> dict[str, Any]:
 class Rehearsal:
     """The seven ordered lifecycle steps over one persistent state directory."""
 
+    step_names: tuple[str, ...] = STEP_NAMES
+
     def __init__(
         self,
         root: Path,
@@ -702,7 +733,10 @@ class Rehearsal:
 
     @contextmanager
     def step(self, name: str) -> Iterator[dict[str, Any]]:
-        self.expect(name == STEP_NAMES[len(self.steps)], "lifecycle steps must run in order")
+        self.expect(
+            len(self.steps) < len(self.step_names) and name == self.step_names[len(self.steps)],
+            "lifecycle steps must run in order",
+        )
         self.current_step = name
         started = time.monotonic()
         record: dict[str, Any] = {
@@ -821,12 +855,34 @@ class Rehearsal:
             "mechanism": policy.sandbox_mechanism,
             "profile_sha256": policy.sandbox_profile_digest,
         }
+        proof["profile_retained"] = self.retain_profile(
+            policy.sandbox_profile_digest, getattr(policy, "sandbox_profile_text", None)
+        )
         self.worker_proofs.append(proof)
         self.expect(
             not self.require_os_sandbox or proof["os_sandbox_applied"] is True,
             "the serving worker lacks OS sandbox enforcement",
         )
         return proof
+
+    def retain_profile(self, digest: str | None, text: str | None) -> bool:
+        """Keep the exact sandbox profile bytes privately, named by their digest.
+
+        The profile holds local paths, so it stays in the private state directory and only
+        its digest is published. A launcher that reports no profile text retains nothing.
+        """
+        if digest is None or text is None:
+            return False
+        data = text.encode("utf-8")
+        self.expect(
+            digest == _digest(data), "the worker's sandbox profile text differs from its digest"
+        )
+        path = self.state / PROFILE_DIRECTORY / (digest.removeprefix("sha256:") + ".sb")
+        if path.exists():
+            self.expect(path.read_bytes() == data, "a retained sandbox profile changed")
+        else:
+            write_private(path, data)
+        return True
 
     def deploy(self, role: str, reason: str) -> dict[str, Any]:
         assert self.stack is not None
@@ -1308,13 +1364,8 @@ class Rehearsal:
         started = time.monotonic()
         try:
             self.stack = self.make_stack()
-            self.step_1()
-            self.step_2()
-            self.step_3()
-            self.step_4()
-            self.step_5()
-            self.step_6()
-            self.step_7()
+            for step in self.sequence():
+                step()
         except BaseException as exc:
             try:
                 self.cleanup()
@@ -1324,6 +1375,18 @@ class Rehearsal:
         lifecycle = self.lifecycle(started)
         write_json(self.state / "lifecycle.json", lifecycle)
         return lifecycle
+
+    def sequence(self) -> tuple[Callable[[], None], ...]:
+        """The lifecycle's steps in the order they run."""
+        return (
+            self.step_1,
+            self.step_2,
+            self.step_3,
+            self.step_4,
+            self.step_5,
+            self.step_6,
+            self.step_7,
+        )
 
     def accounting(self) -> dict[str, Any]:
         return {
@@ -1355,6 +1418,7 @@ class Rehearsal:
             "steps": self.steps,
             "elapsed_seconds": round(time.monotonic() - started, 6),
             "milestone_verdict": None,
+            **({"scenario": self.plan["scenario"]} if "scenario" in self.plan else {}),
             **self.accounting(),
         }
 
@@ -1411,6 +1475,31 @@ def seal(state: Path) -> dict[str, Any]:
 
 
 # Semantic verification (read-only) ----------------------------------------------------------
+
+
+def verify_retained_profiles(state: Path, proofs: Sequence[Mapping[str, Any]]) -> int:
+    """Check each retained sandbox profile against the digest its worker event recorded.
+
+    Returns the number of worker events whose profile bytes are retained. Raises when a
+    retained profile is missing or altered, or when a stored profile belongs to no event.
+    """
+    directory = state / PROFILE_DIRECTORY
+    retained = [p for p in proofs if p.get("profile_retained") is True]
+    digests = [p.get("profile_sha256") for p in retained]
+    if not all(isinstance(d, str) and _PROFILE_DIGEST.fullmatch(d) for d in digests):
+        raise ValueError("S8 retained sandbox profile digest is malformed")
+    expected = {str(d).removeprefix("sha256:") + ".sb" for d in digests}
+    if directory.is_symlink():
+        raise ValueError("S8 retained sandbox profile directory is a symbolic link")
+    entries = list(directory.iterdir()) if directory.is_dir() else []
+    if any(entry.is_symlink() or not entry.is_file() for entry in entries):
+        raise ValueError("S8 retained sandbox profiles must be regular files")
+    if {entry.name for entry in entries} != expected:
+        raise ValueError("S8 retained sandbox profiles differ from the worker events")
+    for name in expected:
+        if _digest((directory / name).read_bytes()) != "sha256:" + name.removesuffix(".sb"):
+            raise ValueError("S8 retained sandbox profile bytes differ from their digest")
+    return len(retained)
 
 
 def _read_only(path: Path) -> sqlite3.Connection:
@@ -1595,11 +1684,17 @@ def inspect_rehearsal(state: Path) -> dict[str, Any]:
             and p["mechanism"] == "darwin_sandbox_exec"
             and isinstance(p["profile_sha256"], str)
             and p["profile_sha256"].startswith("sha256:")
+            # Runs from before retention carry no key; a newer run must have kept the bytes.
+            and p.get("profile_retained", True) is True
             for p in proofs
         ),
         "mechanisms": sorted({p["mechanism"] for p in proofs}),
         "caller_kinds": lifecycle["caller_kinds"],
     }
+    # Runs from before profile retention carry no ``profile_retained`` key; their stored
+    # verification has no such count, and it must still be reproduced exactly.
+    if any("profile_retained" in p for p in proofs):
+        enforcement["profiles_retained"] = verify_retained_profiles(state, proofs)
     if [p["event"] for p in proofs] != [
         "deploy A",
         "deploy B",
@@ -1729,6 +1824,8 @@ def stored_report(state: Path) -> dict[str, Any]:
         "campaign_cap": plan["campaign_cap"],
         "milestone_verdict": None,
     }
+    if "scenario" in plan:
+        report["scenario"] = plan["scenario"]
     if (state / "failure.json").exists():
         failure = read_json(state / "failure.json")
         counts, _ = ledger_state(state / "send-budget.sqlite")
@@ -1789,6 +1886,7 @@ def render_report(report: Mapping[str, Any]) -> str:
             "network client was constructed. No milestone verdict: the human grades S8."
         ),
         "",
+        *([f"Supplemental scenario: `{report['scenario']}`.", ""] if "scenario" in report else []),
         f"Rehearsal plan: `{report['plan_sha256']}`",
         "",
         f"Owner approval record: `{report['approval_sha256']}`",
@@ -1902,8 +2000,11 @@ def render_report(report: Mapping[str, Any]) -> str:
                 "",
                 f"Refused transitions: {json.dumps(verification['refused_transitions'])}",
                 "",
-                f"Recovery: {json.dumps(verification['recovery'], sort_keys=True)}",
-                "",
+                *(
+                    [f"Recovery: {json.dumps(verification['recovery'], sort_keys=True)}", ""]
+                    if "recovery" in verification
+                    else []
+                ),
                 (
                     "| Replayed episode | Dispatches | Reward 1 count | Max differing pixels | "
                     "Max channel delta |"

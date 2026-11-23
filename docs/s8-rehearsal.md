@@ -23,7 +23,7 @@ retains screenshots, backend checkpoints, and a dispatch ledger for independent 
 
 | Command | Does | Refuses |
 | --- | --- | --- |
-| `prepare --qualification Q --state S --approval A.json [--source ROOT]` | Verifies the sealed qualification and its packages; verifies the owner approval document against the exact sealed packages, gate reports, and demo caps; creates `S` outside Git; copies the sealed send ledger with SQLite's backup API and verifies the copy (integrity, logical identity, 77 paused qualification sends); writes `plan.json`, `approval.json`, `ledger-backup.json` | An existing or in-checkout state directory; a qualification inside Git, unsealed, stopped, or with changed packages; an approval whose digests, caps, tier, actor, or activation flag differ; an approval that approves publication |
+| `prepare --qualification Q --state S --approval A.json [--source ROOT] [--scenario NAME]` | Verifies the sealed qualification and its packages; verifies the owner approval document against the exact sealed packages, gate reports, and demo caps; creates `S` outside Git; copies the sealed send ledger with SQLite's backup API and verifies the copy (integrity, logical identity, 77 paused qualification sends); writes `plan.json`, `approval.json`, `ledger-backup.json` | An existing or in-checkout state directory; a qualification inside Git, unsealed, stopped, or with changed packages; an approval whose digests, caps, tier, actor, or activation flag differ; an approval that approves publication |
 | `run --state S [--source ROOT] [--listener-port N]` | Binds the approval digest to the ledger (`resume_after_owner_review`), then executes the seven steps once; writes `lifecycle.json`, `verification.json`, `acceptance-checks.json`, and `seal.json`; cleans up workers, caller environments, service writers, and stores in `finally` | A second run of the same state (counts are never reset); a changed qualification seal, approval, host source, or installed runtime; any step whose frozen expectation fails (the campaign stops with `failure.json` sealed). Exits nonzero when an acceptance command it ran exited nonzero |
 | `verify --state S [--qualification Q]` | Recomputes the semantic verification from stored bytes (hashes, SQLite integrity, stored-action replay, recovery, cap, and rollback inspection) and compares it with `verification.json`; leaves the directory unchanged. With `--qualification Q`, a recovery check: requires the restored S7 qualification `Q` and that its seal equals the digest in the S8 plan | Any drift between stored and recomputed verification; a broken seal; an S7 seal that differs from the digest in the plan; with `--qualification`, an absent directory |
 | `report --state S` | Renders the stored lifecycle, verification, and acceptance records; constructs no policy, transport, server, backend, or network client | A broken seal or an unbound verification record |
@@ -68,6 +68,17 @@ unit tests run the driver with `require_os_sandbox=False` and an unenforced loca
 flag is recorded in the lifecycle and the verification record (`worker_enforcement`), so an
 unenforced run can never be mistaken for isolation evidence. The CLI exposes no way to relax it.
 
+Since 2026-11-22 the driver also keeps the exact sandbox profile each worker ran under. The
+Darwin launcher hands the profile text to the driver, which stores it in the private state
+directory as `worker-profiles/<sha256>.sb` and records `profile_retained` on the worker event.
+`verify` checks every stored profile against the digest its event recorded, and refuses a missing,
+altered, or unreferenced profile, a malformed digest, and an entry that is not a regular file. When
+the run required the OS sandbox, `verify` also refuses a worker event whose profile was not
+retained. Profiles contain local paths, so only the digest belongs in a
+public record. The November rehearsal predates this: its five digests survive and its profile
+bytes were never captured. A worker that preparation starts and then discards, such as the one
+behind a refused redeploy or rollback, is not the active worker and leaves no proof or profile.
+
 The step-3 interruption is injected through the serving host's existing `interrupt_after`
 boundary hook on the live `ServingEpisodeHost`; no serving code changes for the rehearsal. The
 caller's transport (`in-process-asgi` or `loopback-listener:127.0.0.1:PORT`) is recorded per
@@ -79,6 +90,49 @@ sockets may bind, connect, or send datagrams only to the literals `127.0.0.1` an
 before the system call, and host names (including `localhost`) are refused so no resolver is
 consulted. Both guards are in-process Python guards on the driver, not an OS boundary; the
 policy worker's OS sandbox and egress proxy are the enforced boundary either way.
+
+## Rollback-for-exhaustion supplement
+
+Step 6 of the rehearsal asks preparation to refuse a rollback toward exhausted B. In the executed
+rehearsal the rollback found no eligible target: the lineage rule refused it with
+`candidate_id: null` before preparation ran, and it would have refused the same way if B had
+capacity left. Repeating that sequence cannot separate the two causes. The owner decided on
+2026-11-22 to close this with a narrow supplemental scenario,
+`rollback-exhaustion-supplement-v1` (`pixelgym/platform/s8_rollback_supplement.py`):
+
+1. Register A and B.
+2. Approve and deploy B, complete the 20-action golden episode, and probe until the cap seals at
+   24 attempts.
+3. Approve and explicitly deploy A. The newest row is then a deploy of A, so the earlier deploy of
+   B is the eligible rollback target. The step records that target before any rollback.
+4. Request a rollback. Preparation selects B, sends its contract smoke, and refuses because B's cap
+   is exhausted. The step records B's candidate ID, the `StatefulLoadError` and its exhaustion
+   message, the `deployment.rollback_failed` audit event naming B, A's unchanged deployment ID, B's unchanged
+   count of 24, and the smoke sends before and after.
+5. Stop everything; the final pointer still selects A.
+
+Expected durable sends: qualification 77, B 24, smoke 3 (deploy B, deploy A, and the refused
+rollback's preparation), A 0; total 104 of the 111 campaign cap.
+
+The preparer raises `StatefulLoadError` for several causes, including a worker that fails to start
+and a failed readiness reset, and the audit row keeps no message for that class. The step and
+`verify` therefore also require the cap-exhaustion message recorded in the sealed lifecycle.
+
+`prepare --scenario rollback-exhaustion-supplement-v1` writes a plan that names the scenario, and
+it requires an owner approval document with a matching `scenario` field. The full rehearsal's
+approval has no such field, so neither approval can stand in for the other. `run`, `verify`, and
+`report` read the scenario from the plan. The scenario needs its own sealed S7 qualification at
+the revision it runs from.
+
+**Status:** implemented and covered by unit tests and the opt-in real-sandbox integration test.
+It has not been executed against a counted qualification. Running it needs the owner's approval of
+a fresh qualification (77 fake sends) and of the scenario's approval document.
+
+The owner also decided on 2026-11-22 to accept the existing unit regressions as coverage for a
+live episode that crosses a deployment change
+(`tests/unit/platform/test_stateful_control_plane.py`). The rehearsal's two `409
+deployment_changed` observations concern episodes that had already ended; no integrated run of the
+live case is planned. This is an explicit exception to integrated evidence for that case.
 
 ## Recovery verification
 
@@ -103,6 +157,7 @@ S/
 ├── immutable/                   # put-once episode records and final screenshots
 ├── packages/<candidate>/        # per-version session store and attempt journal
 ├── caller/episodes/*.json       # caller dispatch ledgers; caller/objects/ holds PNGs and checkpoints
+├── worker-profiles/<sha256>.sb  # exact sandbox profile of each worker event (private; since 2026-11-22)
 ├── lifecycle.json | failure.json
 ├── verification.json, acceptance-checks.json
 └── seal.json
@@ -123,6 +178,10 @@ PASS/FAIL verdict.
   reservations matching journal requests, cleanup, verification immutability, the report's
   execution boundary (denied constructors and sockets), rerun refusal, and sealed failure
   retention. These results are never OS-isolation evidence.
+- `tests/unit/platform/test_s8_rollback_supplement.py` runs the supplement against the same
+  synthetic qualification. It covers the scenario binding of plan and approval, the refusal's
+  cause (exhaustion on the selected candidate B, not the lineage rule), the unchanged pointer and
+  counts, the single smoke the refused preparation consumes, stored verification, and the report.
 - `tests/integration/test_s8_rehearsal_local.py` (opt-in: `PIXELGYM_RUN_V5_SANDBOX_TESTS=1` on
   Darwin outside a parent sandbox) qualifies a throwaway run from the clean checkout with the
   real Darwin sandbox and executes the rehearsal through a real `127.0.0.1` listener.

@@ -8,6 +8,7 @@ approval, and makes no provider request.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import platform
@@ -22,11 +23,17 @@ from pixelgym.platform.s7_qualification import prepare as prepare_qualification
 from pixelgym.platform.s7_qualification import qualify, read_json
 from pixelgym.platform.s8_rehearsal import (
     APPROVAL_SCHEMA,
+    PROFILE_DIRECTORY,
     LoopbackCaller,
     Rehearsal,
     prepare,
     render_report,
     stored_report,
+)
+from pixelgym.platform.s8_rollback_supplement import (
+    SCENARIO,
+    RollbackSupplement,
+    prepare_supplement,
 )
 from scripts import s7_serving
 from scripts import s8_rehearsal as cli
@@ -120,3 +127,58 @@ def test_real_sandbox_and_loopback_listener_rehearsal(tmp_path: Path) -> None:
     assert lifecycle["caller_kinds"] == [f"loopback-listener:127.0.0.1:{port}"] * 2
     verification = read_json(state / "verification.json")
     assert verification["worker_enforcement"]["all_enforced"] is True
+    # Each worker event retains the exact profile bytes it ran under, named by digest.
+    assert all(p["profile_retained"] is True for p in proofs)
+    assert verification["worker_enforcement"]["profiles_retained"] == 5
+    for proof in proofs:
+        stored = state / PROFILE_DIRECTORY / (proof["profile_sha256"][7:] + ".sb")
+        assert (
+            "sha256:" + hashlib.sha256(stored.read_bytes()).hexdigest() == proof["profile_sha256"]
+        )
+        assert b"(version 1)\n(deny default)" in stored.read_bytes()
+
+
+def test_real_sandbox_rollback_supplement_is_refused_by_exhaustion(tmp_path: Path) -> None:
+    qualification = tmp_path / "qualification"
+    with s7_serving.no_network():
+        prepare_qualification(
+            REPOSITORY_ROOT,
+            qualification,
+            run_id="s8-supplement-integration-throwaway",
+            approval="throwaway integration qualification; not an owner decision",
+            expected_predecessor_sends=0,
+        )
+        qualify(REPOSITORY_ROOT, qualification)
+        s7_serving.finalize(qualification)
+    approval = tmp_path / "approval.json"
+    approval.write_bytes(json.dumps({**_approval(qualification), "scenario": SCENARIO}).encode())
+    state = tmp_path / "state"
+    with s7_serving.no_network():
+        prepare_supplement(REPOSITORY_ROOT, qualification, state, approval_path=approval)
+    port = _free_loopback_port()
+    scenario = RollbackSupplement(
+        REPOSITORY_ROOT, state, caller_factory=lambda app: LoopbackCaller(app, port=port)
+    )
+    with cli.loopback_only_sockets():
+        lifecycle = scenario.run()
+    assert lifecycle["fake_sends"] == {"qualification": 77, "B": 24, "smoke": 3}
+    assert lifecycle["version_attempts"] == {"A": 0, "B": 24}
+    with s7_serving.no_network():
+        checks = cli.finalize(REPOSITORY_ROOT, state)
+        result = cli.verify(state, qualification)
+    assert checks["checks"][0]["exit_status"] == 0, checks["checks"][0]["stderr"]
+    assert result["campaign_total"] == 104 and result["qualification_seal_verified"] is True
+    observed = lifecycle["steps"][3]["observations"]["rollback_toward_exhausted_B"]
+    assert observed["refusal"]["error_class"] == "StatefulLoadError"
+    assert observed["audit"]["event_type"] == "deployment.rollback_failed"
+    assert observed["audit"]["candidate_id"] == lifecycle["candidates"]["B"]
+    assert observed["pointer_preserved"] is True
+    assert observed["active_pointer_after"]["candidate_id"] == lifecycle["candidates"]["A"]
+    assert observed["b_attempts_after"] == 24 and observed["smoke_sends_consumed_by_refusal"] == 1
+    proofs = lifecycle["worker_proofs"]
+    assert [p["event"] for p in proofs] == ["deploy B", "deploy A"]
+    assert all(p["os_sandbox_applied"] is True and p["profile_retained"] is True for p in proofs)
+    verification = read_json(state / "verification.json")
+    assert verification["worker_enforcement"]["all_enforced"] is True
+    assert verification["worker_enforcement"]["profiles_retained"] == 2
+    assert verification["exhaustion_refusal"]["selected_candidate_is_b"] is True

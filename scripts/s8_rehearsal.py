@@ -37,6 +37,14 @@ from pixelgym.platform.s8_rehearsal import (
     seal,
     stored_report,
 )
+from pixelgym.platform.s8_rollback_supplement import (
+    SCENARIO as ROLLBACK_SUPPLEMENT,
+)
+from pixelgym.platform.s8_rollback_supplement import (
+    RollbackSupplement,
+    inspect_supplement,
+    prepare_supplement,
+)
 from scripts.s7_serving import no_network
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -108,6 +116,21 @@ def loopback_only_sockets() -> Iterator[None]:
         socket.socket = original  # type: ignore[misc]
 
 
+def scenario_of(state: Path) -> str | None:
+    """The supplemental scenario a state directory was prepared for, if any."""
+    return read_json(state / "plan.json").get("scenario")
+
+
+def inspect_state(state: Path) -> dict[str, Any]:
+    """Run the stored-evidence verification that matches the state's lifecycle."""
+    scenario = scenario_of(state)
+    if scenario is None:
+        return inspect_rehearsal(state)
+    if scenario == ROLLBACK_SUPPLEMENT:
+        return inspect_supplement(state)
+    raise ValueError("the S8 state names an unknown scenario")
+
+
 def verify(state: Path, qualification: Path | None = None) -> dict[str, Any]:
     """Recompute the semantic verification from stored bytes; the directory is unchanged.
 
@@ -117,7 +140,7 @@ def verify(state: Path, qualification: Path | None = None) -> dict[str, Any]:
     there leaves ``qualification_seal_verified`` as ``None``, and a different seal raises.
     """
     verify_seal(state)
-    observed = inspect_rehearsal(state)
+    observed = inspect_state(state)
     if observed != read_json(state / "verification.json"):
         raise ValueError("S8 stored semantic verification differs from restored evidence")
     plan = read_json(state / "plan.json")
@@ -186,7 +209,7 @@ def acceptance_checks(root: Path, state: Path) -> dict[str, Any]:
 def finalize(root: Path, state: Path) -> dict[str, Any]:
     """Store the semantic verification, seal, run acceptance commands, and reseal."""
     try:
-        verification = inspect_rehearsal(state)
+        verification = inspect_state(state)
         write_json(state / "verification.json", verification)
     except BaseException as exc:
         lifecycle = read_json(state / "lifecycle.json")
@@ -227,6 +250,12 @@ def main() -> None:
     preparation.add_argument("--state", type=Path, required=True)
     preparation.add_argument("--approval", type=Path, required=True)
     preparation.add_argument("--source", type=Path, default=REPOSITORY_ROOT)
+    preparation.add_argument(
+        "--scenario",
+        choices=(ROLLBACK_SUPPLEMENT,),
+        default=None,
+        help="prepare a supplemental scenario instead of the full rehearsal",
+    )
     execution = commands.add_parser("run")
     execution.add_argument("--state", type=Path, required=True)
     execution.add_argument("--source", type=Path, default=REPOSITORY_ROOT)
@@ -249,7 +278,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "prepare":
         with no_network():
-            plan = prepare(
+            plan = (prepare if args.scenario is None else prepare_supplement)(
                 args.source.resolve(),
                 args.qualification.resolve(),
                 args.state.resolve(),
@@ -258,13 +287,14 @@ def main() -> None:
         output: dict[str, Any] = {"plan_sha256": content_digest(plan), "fake_sends": 0}
     elif args.command == "run":
         state, root = args.state.resolve(), args.source.resolve()
+        lifecycle_class = Rehearsal if scenario_of(state) is None else RollbackSupplement
         if args.listener_port is None:
-            rehearsal = Rehearsal(root, state, caller_factory=AsgiCaller)
+            rehearsal = lifecycle_class(root, state, caller_factory=AsgiCaller)
             with no_inet_sockets():
                 lifecycle = rehearsal.run()
         else:
             port = args.listener_port
-            rehearsal = Rehearsal(
+            rehearsal = lifecycle_class(
                 root, state, caller_factory=lambda app: LoopbackCaller(app, port=port)
             )
             with loopback_only_sockets():

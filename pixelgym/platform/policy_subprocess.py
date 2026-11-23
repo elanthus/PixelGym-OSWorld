@@ -124,6 +124,9 @@ class LaunchedPolicyWorker:
     mechanism: str
     profile_digest: str | None
     os_sandbox_applied: bool
+    # The exact profile text handed to the sandbox, when one exists. It contains local paths,
+    # so callers keep it private and publish only ``profile_digest``.
+    profile_text: str | None = None
 
 
 class PolicyWorkerLauncher(Protocol):
@@ -308,6 +311,7 @@ class DarwinPolicyWorkerLauncher:
             mechanism="darwin_sandbox_exec",
             profile_digest="sha256:" + sha256_bytes(profile.encode("utf-8")),
             os_sandbox_applied=True,
+            profile_text=profile,
         )
 
 
@@ -376,6 +380,10 @@ class SandboxedPolicyProcess:
     @property
     def sandbox_profile_digest(self) -> str | None:
         return self._launched.profile_digest
+
+    @property
+    def sandbox_profile_text(self) -> str | None:
+        return self._launched.profile_text
 
     @property
     def sandbox_mechanism(self) -> str:

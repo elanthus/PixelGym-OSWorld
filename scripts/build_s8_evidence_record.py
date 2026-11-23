@@ -316,6 +316,8 @@ def rehearsal(inputs: Inputs, qualified: dict[str, Any]) -> dict[str, Any]:
     run = command_log(logs / "run-command.log")
     prepare = command_log(logs / "prepare-command.log")
     prepare["stderr_bytes"] = len(_bytes(logs / "prepare.stderr.log"))
+    # After every read, so a deleted input raises MissingInput rather than a seal mismatch.
+    _require(inventory(state) == _json(state / "seal.json"), "S8 state differs from its seal")
     return {
         "run_id": S8_RUN,
         "evidence_label": plan["evidence_label"],

@@ -359,7 +359,7 @@ def test_a_profile_altered_after_sealing_is_refused(tmp_path: Path) -> None:
     profile = inputs.s8_run / f"state/worker-profiles/{PROFILE_DIGEST.removeprefix('sha256:')}.sb"
     profile.write_bytes(b"(version 1)\n(allow default)\n")
 
-    with pytest.raises(ValueError, match="S8 supplement state differs from its seal"):
+    with pytest.raises(ValueError, match="S8 state differs from its seal"):
         _build(inputs, public)
 
 
@@ -390,6 +390,7 @@ def test_a_plan_for_another_scenario_is_refused(tmp_path: Path) -> None:
     inputs, public = build_tree(tmp_path)
     plan_path = inputs.s8_run / "state/plan.json"
     _write(plan_path, {**json.loads(plan_path.read_text()), "scenario": None})
+    seal_state(inputs.s8_run / "state")
 
     with pytest.raises(ValueError, match="rollback-for-exhaustion scenario"):
         _build(inputs, public)

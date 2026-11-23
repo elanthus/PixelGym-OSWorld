@@ -21,12 +21,14 @@ import json
 import re
 import sqlite3
 import sys
+from collections.abc import Iterator
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from pixelgym.grounding.v5.contracts import content_digest
+from pixelgym.platform.s7_evidence import inventory
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = REPOSITORY_ROOT / "artifacts/evidence-s8-rehearsal-20261119"
@@ -105,16 +107,29 @@ def redact(text: str) -> str:
     return _HOME_PATH.sub("~", text)
 
 
-def exposes_local_user(rendered: str) -> bool:
+def _strings(value: Any) -> Iterator[str]:
+    """Every decoded string key and value, so JSON escaping cannot hide a match."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            yield str(key)
+            yield from _strings(item)
+    elif isinstance(value, list | tuple):
+        for item in value:
+            yield from _strings(item)
+
+
+def exposes_local_user(text: str) -> bool:
     """Whether text still holds an absolute home path or the account name as a whole word.
 
     ``_`` is a word character, so an account named like a common word (``sandbox``) does not
     match inside keys such as ``worker_os_sandbox_required``; a standalone occurrence does.
     """
     return (
-        str(_HOME) in rendered
-        or _HOME_PATH.search(rendered) is not None
-        or re.search(rf"\b{re.escape(_HOME.name)}\b", rendered) is not None
+        str(_HOME) in text
+        or _HOME_PATH.search(text) is not None
+        or re.search(rf"\b{re.escape(_HOME.name)}\b", text) is not None
     )
 
 
@@ -179,6 +194,10 @@ def _require(condition: bool, message: str) -> None:
 def qualification(inputs: Inputs) -> dict[str, Any]:
     run, logs = inputs.s7_run / "qualification", inputs.s7_run / "review/command-logs"
     plan, lock = _json(run / "plan.json"), _json(run / "runtime-lock.json")
+    _require(
+        plan["runtime_lock_sha256"] == content_digest(lock),
+        "S7 runtime lock differs from the digest its plan binds",
+    )
     binding, accounting = _json(run / "source-binding.json"), plan["cumulative_accounting"]
     qualify_output = _json(logs / "qualification.stdout.json")
     verify = command_log(logs / "verify-command.log")
@@ -213,6 +232,8 @@ def qualification(inputs: Inputs) -> dict[str, Any]:
     )
     qualify = command_log(logs / "qualify-command.log")
     qualify["stderr_bytes"] = len(_bytes(logs / "qualify.stderr.log"))
+    # After every read, so a deleted input raises MissingInput rather than a seal mismatch.
+    _require(inventory(run) == _json(run / "seal.json"), "S7 qualification differs from its seal")
     return {
         "run_id": plan["run_id"],
         "source_revision": binding["revision"],
@@ -411,13 +432,16 @@ def recovery_checks(
         "s7_local_restore": _sha256(logs / "s7-local-report.stdout"),
         "s7_backblaze_restore": _sha256(logs / "s7-b2-report.stdout"),
     }
+    # Read every verifier output first, so a missing one raises even after an earlier mismatch.
+    outputs = {
+        (run, copy): _json(logs / f"{run}-{copy}-verify.stdout")
+        for copy in ("local", "b2")
+        for run in ("s8", "s7")
+    }
     verify_matches = all(
-        _json(logs / f"s8-{copy}-verify.stdout")["verification_sha256"]
-        == rehearsed["verification_sha256"]
-        and _json(logs / f"s8-{copy}-verify.stdout")["lifecycle_sha256"]
-        == rehearsed["lifecycle_sha256"]
-        and _json(logs / f"s7-{copy}-verify.stdout")["verification_sha256"]
-        == qualified["verification_sha256"]
+        outputs["s8", copy]["verification_sha256"] == rehearsed["verification_sha256"]
+        and outputs["s8", copy]["lifecycle_sha256"] == rehearsed["lifecycle_sha256"]
+        and outputs["s7", copy]["verification_sha256"] == qualified["verification_sha256"]
         for copy in ("local", "b2")
     )
     return {
@@ -564,8 +588,7 @@ def build(inputs: Inputs, statements_path: Path) -> dict[str, Any]:
         },
         "operator_statements": statements,
     }
-    rendered = json.dumps(record, sort_keys=True)
-    if exposes_local_user(rendered):
+    if any(exposes_local_user(text) for text in _strings(record)):
         raise ValueError("the record would contain a local user path or name")
     return record
 

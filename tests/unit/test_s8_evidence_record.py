@@ -12,6 +12,7 @@ from typing import Any
 import pytest
 
 from pixelgym.grounding.v5.contracts import content_digest
+from pixelgym.platform.s7_qualification import seal as seal_qualification
 from scripts import build_s8_evidence_record as generator
 from scripts.build_s8_evidence_record import NOT_CAPTURED, Inputs, MissingInput
 
@@ -83,7 +84,9 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
     public = root / "public"
     q, s7_logs = inputs.s7_run / "qualification", inputs.s7_run / "review/command-logs"
     binding = _write(q / "source-binding.json", {"revision": REVISION, "files": {}})
-    _write(q / "runtime-lock.json", {"python": "3.12.0", "distributions": {"a": {}, "b": {}}})
+    lock = _write(
+        q / "runtime-lock.json", {"python": "3.12.0", "distributions": {"a": {}, "b": {}}}
+    )
     policy = {"campaign_cap": 9, "phase_caps": {"A": 2, "B": 2, "qualification": 3, "smoke": 2}}
     _write(q / "gate-policy.json", policy)
     plan = _write(
@@ -91,6 +94,7 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
         {
             "run_id": "s7-fixture",
             "gate_policy_sha256": content_digest(policy).removeprefix("sha256:"),
+            "runtime_lock_sha256": content_digest(lock),
             "cumulative_accounting": {
                 "records": [{"qualification_sends": 0}, {"qualification_sends": 4}],
                 "previous_qualification_sends": 4,
@@ -99,7 +103,6 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
             },
         },
     )
-    seal = _write(q / "seal.json", {"files": {"plan.json": "x"}})
     verification = _write(q / "verification.json", {"cumulative_qualification_sends": 7})
     _ledger(q / "send-budget.sqlite", S7_SENDS)
     packages = {}
@@ -112,6 +115,7 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
             "package_sha256": content_digest(package),
             "gate_report_sha256": content_digest(report),
         }
+    seal = seal_qualification(q)
     s7_output = {
         "activation_performed": False,
         "fake_sends": S7_SENDS,
@@ -382,14 +386,62 @@ def test_the_account_name_is_matched_only_as_a_whole_word(
         generator.build(inputs, statements)
 
 
-def test_a_gate_policy_that_differs_from_its_bound_digest_is_refused(tmp_path: Path) -> None:
+def test_a_gate_policy_that_differs_from_its_bound_digest_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     inputs, public = build_tree(tmp_path)
     policy_path = inputs.s7_run / "qualification/gate-policy.json"
     policy = json.loads(policy_path.read_text())
     policy_path.write_text(json.dumps({**policy, "campaign_cap": 999}))
+    with pytest.raises(ValueError, match="S7 qualification differs from its seal"):
+        generator.build(inputs, public / "operator-statements.json")
 
+    # Without the seal check, the plan's policy digest still refuses the changed caps.
+    monkeypatch.setattr(
+        generator, "inventory", lambda run: json.loads((run / "seal.json").read_text())
+    )
     with pytest.raises(ValueError, match="gate policy differs from the digest its plan binds"):
         generator.build(inputs, public / "operator-statements.json")
+
+
+def test_a_changed_or_unsealed_s7_qualification_is_refused(tmp_path: Path) -> None:
+    inputs, public = build_tree(tmp_path)
+    lock_path = inputs.s7_run / "qualification/runtime-lock.json"
+    lock = json.loads(lock_path.read_text())
+    lock_path.write_text(json.dumps({**lock, "python": "3.13.0"}))
+    with pytest.raises(ValueError, match="runtime lock differs from the digest its plan binds"):
+        generator.build(inputs, public / "operator-statements.json")
+
+    inputs, public = build_tree(tmp_path / "second")
+    (inputs.s7_run / "qualification/extra.json").write_text("{}")
+    with pytest.raises(ValueError, match="S7 qualification differs from its seal"):
+        generator.build(inputs, public / "operator-statements.json")
+
+
+def test_a_missing_verifier_output_raises_even_after_an_earlier_mismatch(tmp_path: Path) -> None:
+    inputs, public = build_tree(tmp_path)
+    logs = inputs.cache_s8 / "recovery-checks"
+    local = json.loads((logs / "s8-local-verify.stdout").read_text())
+    (logs / "s8-local-verify.stdout").write_text(
+        json.dumps({**local, "verification_sha256": "sha256:" + "0" * 64})
+    )
+    (logs / "s8-b2-verify.stdout").unlink()
+    with pytest.raises(MissingInput, match="required private input is absent"):
+        generator.build(inputs, public / "operator-statements.json")
+
+
+@pytest.mark.parametrize(
+    ("home", "statement"),
+    [("/Users/bob", "Operator:\nbob"), ("/Users/zo\u00eb", "run by zo\u00eb")],
+)
+def test_the_account_name_is_found_in_decoded_strings(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, home: str, statement: str
+) -> None:
+    inputs, public = build_tree(tmp_path)
+    monkeypatch.setattr(generator, "_HOME", Path(home))
+    statements = _add_statement(public, "note", statement)
+    with pytest.raises(ValueError, match="local user path or name"):
+        generator.build(inputs, statements)
 
 
 def test_check_passes_on_a_fresh_record_and_fails_after_one_edit(

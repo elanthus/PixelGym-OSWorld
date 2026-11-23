@@ -11,11 +11,12 @@ The record under ``artifacts/evidence-s8-supplement-20261123/`` has two kinds of
 
 The qualification and supplement sections reuse the rehearsal record's readers
 (``scripts/build_s8_evidence_record.py``), so both records apply the same digest and seal
-checks. This builder also checks the S8 state against its seal and each archive manifest
-against the digest in its receipt. Disagreement between stored digests raises. Outcomes are
-recorded as observed, never required: a refusal with another cause, a different send count, or a
-Backblaze count that does not reconcile is written into the record, not refused. ``--check``
-rebuilds the record in memory and exits nonzero when it differs from the checked-in file.
+checks, including the S8 state against its seal. This builder also checks each archive
+manifest against the digest in its receipt. Disagreement between stored digests raises.
+Outcomes are recorded as observed, never required: a refusal with another cause, a different
+send count, or a Backblaze count that does not reconcile is written into the record, not
+refused. ``--check`` rebuilds the record in memory and exits nonzero when it differs from the
+checked-in file.
 """
 
 from __future__ import annotations
@@ -30,7 +31,6 @@ from pathlib import Path
 from typing import Any
 
 from pixelgym.grounding.v5.contracts import content_digest
-from pixelgym.platform.s7_evidence import inventory
 from pixelgym.platform.s8_rollback_supplement import EXPECTED_SENDS, SCENARIO
 from scripts import build_s8_evidence_record as rehearsal_record
 from scripts.build_s8_evidence_record import (
@@ -86,6 +86,8 @@ def _step_observations(lifecycle: dict[str, Any], name: str) -> dict[str, Any]:
 
 def supplement(inputs: Inputs, qualified: dict[str, Any]) -> dict[str, Any]:
     """The rehearsal section's checks, plus the scenario binding and the rollback observations."""
+    # rehearsal() checks the S8 state against its seal, which covers the worker profiles too;
+    # stored_profile_matches_digest stays a separate recorded field.
     base = rehearsal_record.rehearsal(inputs, qualified)  # type: ignore[arg-type]
     state = inputs.s8_run / "state"
     plan, lifecycle = _json(state / "plan.json"), _json(state / "lifecycle.json")
@@ -120,11 +122,6 @@ def supplement(inputs: Inputs, qualified: dict[str, Any]) -> dict[str, Any]:
         )
     deployed_a = _step_observations(lifecycle, "approve_and_deploy_a")
     rollback = _step_observations(lifecycle, "rollback_selects_exhausted_b")
-    # After every read, so a deleted input raises MissingInput rather than a seal mismatch. The
-    # seal covers the worker profiles too; stored_profile_matches_digest stays a separate field.
-    _require(
-        inventory(state) == _json(state / "seal.json"), "S8 supplement state differs from its seal"
-    )
     return {
         **base,
         "run_id": S8_RUN,

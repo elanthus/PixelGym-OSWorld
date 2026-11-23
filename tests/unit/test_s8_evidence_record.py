@@ -13,6 +13,7 @@ import pytest
 
 from pixelgym.grounding.v5.contracts import content_digest
 from pixelgym.platform.s7_qualification import seal as seal_qualification
+from pixelgym.platform.s8_rehearsal import seal as seal_state
 from scripts import build_s8_evidence_record as generator
 from scripts.build_s8_evidence_record import NOT_CAPTURED, Inputs, MissingInput
 
@@ -184,12 +185,12 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
         },
     )
     s8_verification = _write(state / "verification.json", {"campaign_total": 7})
-    _write(state / "seal.json", {"files": {}})
     _write(
         state / "acceptance-checks.json",
         {"checks": [{"name": "replay", "exit_status": 0, "elapsed_seconds": 0.1, "stdout": "x"}]},
     )
     _ledger(state / "send-budget.sqlite", S8_SENDS)
+    seal_state(state)
     s8_output = {
         "fake_sends": S8_SENDS,
         "lifecycle_sha256": content_digest(lifecycle),
@@ -415,6 +416,19 @@ def test_a_changed_or_unsealed_s7_qualification_is_refused(tmp_path: Path) -> No
     inputs, public = build_tree(tmp_path / "second")
     (inputs.s7_run / "qualification/extra.json").write_text("{}")
     with pytest.raises(ValueError, match="S7 qualification differs from its seal"):
+        generator.build(inputs, public / "operator-statements.json")
+
+
+def test_a_changed_or_unsealed_s8_state_is_refused(tmp_path: Path) -> None:
+    inputs, public = build_tree(tmp_path)
+    checks = inputs.s8_run / "state/acceptance-checks.json"
+    checks.write_text(checks.read_text().replace('"exit_status": 0', '"exit_status": 1'))
+    with pytest.raises(ValueError, match="S8 state differs from its seal"):
+        generator.build(inputs, public / "operator-statements.json")
+
+    inputs, public = build_tree(tmp_path / "second")
+    (inputs.s8_run / "state/extra.json").write_text("{}")
+    with pytest.raises(ValueError, match="S8 state differs from its seal"):
         generator.build(inputs, public / "operator-statements.json")
 
 

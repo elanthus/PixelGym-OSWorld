@@ -236,6 +236,25 @@ def test_verification_refuses_a_refusal_attributed_to_another_candidate(
         inspect_supplement(ran.state)
 
 
+def test_verification_refuses_a_non_cap_load_error_on_b(
+    ran: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A worker that failed to start raises the same class; it is not proof of exhaustion."""
+    original = supplement.read_json
+    lifecycle = json.loads(json.dumps(original(ran.state / "lifecycle.json")))
+    for step in lifecycle["steps"]:
+        if step["name"] == "rollback_selects_exhausted_b":
+            observed = step["observations"]["rollback_toward_exhausted_B"]
+            observed["refusal"]["message"] = "policy worker did not start in its isolated process"
+
+    def altered(path: Path) -> Any:
+        return lifecycle if path == ran.state / "lifecycle.json" else original(path)
+
+    monkeypatch.setattr(supplement, "read_json", altered)
+    with pytest.raises(ValueError, match="refusal is not B's exhausted cap"):
+        inspect_supplement(ran.state)
+
+
 def test_a_full_rehearsal_plan_cannot_run_as_the_supplement(
     qualified_fixture: Path,  # noqa: F811
     tmp_path: Path,

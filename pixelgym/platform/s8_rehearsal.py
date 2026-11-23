@@ -19,6 +19,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import re
 import shutil
 import sqlite3
 import time
@@ -95,6 +96,7 @@ CHECKS_SCHEMA = "pixelgym-s8-acceptance-checks-v1"
 REPORT_SCHEMA = "pixelgym-s8-review-report-v1"
 INTERRUPTION_BOUNDARY = "canonical_response_persisted"
 PROFILE_DIRECTORY = "worker-profiles"
+_PROFILE_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 EXPECTED_SENDS = {"A": 2, "B": 24, "smoke": 6}
 STEP_NAMES = (
     "register_and_refuse_unapproved_b",
@@ -1483,9 +1485,16 @@ def verify_retained_profiles(state: Path, proofs: Sequence[Mapping[str, Any]]) -
     """
     directory = state / PROFILE_DIRECTORY
     retained = [p for p in proofs if p.get("profile_retained") is True]
-    expected = {p["profile_sha256"].removeprefix("sha256:") + ".sb" for p in retained}
-    present = {p.name for p in directory.iterdir()} if directory.is_dir() else set()
-    if present != expected:
+    digests = [p.get("profile_sha256") for p in retained]
+    if not all(isinstance(d, str) and _PROFILE_DIGEST.fullmatch(d) for d in digests):
+        raise ValueError("S8 retained sandbox profile digest is malformed")
+    expected = {str(d).removeprefix("sha256:") + ".sb" for d in digests}
+    if directory.is_symlink():
+        raise ValueError("S8 retained sandbox profile directory is a symbolic link")
+    entries = list(directory.iterdir()) if directory.is_dir() else []
+    if any(entry.is_symlink() or not entry.is_file() for entry in entries):
+        raise ValueError("S8 retained sandbox profiles must be regular files")
+    if {entry.name for entry in entries} != expected:
         raise ValueError("S8 retained sandbox profiles differ from the worker events")
     for name in expected:
         if _digest((directory / name).read_bytes()) != "sha256:" + name.removesuffix(".sb"):
@@ -1675,6 +1684,8 @@ def inspect_rehearsal(state: Path) -> dict[str, Any]:
             and p["mechanism"] == "darwin_sandbox_exec"
             and isinstance(p["profile_sha256"], str)
             and p["profile_sha256"].startswith("sha256:")
+            # Runs from before retention carry no key; a newer run must have kept the bytes.
+            and p.get("profile_retained", True) is True
             for p in proofs
         ),
         "mechanisms": sorted({p["mechanism"] for p in proofs}),

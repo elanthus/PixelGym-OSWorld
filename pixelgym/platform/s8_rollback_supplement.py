@@ -57,6 +57,9 @@ STEP_NAMES = (
 GOLDEN_REF = "s8s-b-golden"
 CAP_PROBE_REF = "s8s-b-cap-probe"
 EXHAUSTION_ERROR = "StatefulLoadError"
+# The preparer raises StatefulLoadError for several causes (worker start, sandbox, readiness);
+# only this message identifies the cap check, and the audit row does not keep it.
+EXHAUSTION_MESSAGE = "the deployment attempt cap for this exact version is already exhausted"
 WORKER_EVENTS = ["deploy B", "deploy A"]
 
 
@@ -291,6 +294,7 @@ class RollbackSupplement(Rehearsal):
             }
             self.expect(
                 refusal["error_class"] == EXHAUSTION_ERROR
+                and refusal["message"] == EXHAUSTION_MESSAGE
                 and audit["event_type"] == "deployment.rollback_failed"
                 and audit["candidate_id"] == self.candidates["B"],
                 "the rollback was not refused by B's exhausted cap",
@@ -408,6 +412,16 @@ def inspect_supplement(state: Path) -> dict[str, Any]:
         }
     ]:
         raise ValueError("S8 supplement lacks one rollback refused for exhausted B")
+    refusal = next(
+        (
+            s["observations"].get("rollback_toward_exhausted_B", {}).get("refusal")
+            for s in lifecycle["steps"]
+            if s["name"] == STEP_NAMES[3]
+        ),
+        None,
+    )
+    if refusal != {"error_class": EXHAUSTION_ERROR, "message": EXHAUSTION_MESSAGE}:
+        raise ValueError("S8 supplement rollback refusal is not B's exhausted cap")
     if {role: terms[candidates[role]]["deployment_attempt_cap"] for role in ("A", "B")} != policy[
         "deployment_attempt_caps"
     ] or any(t["deployment_tier"] != "demo" for t in terms.values()):

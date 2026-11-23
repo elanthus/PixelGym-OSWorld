@@ -550,6 +550,55 @@ def test_sandbox_profile_bytes_are_retained_by_digest_and_verified(
         s8_rehearsal.verify_retained_profiles(state, proofs)
 
 
+def test_retained_profile_verification_refuses_malformed_input(tmp_path: Path) -> None:
+    directory = tmp_path / s8_rehearsal.PROFILE_DIRECTORY
+    directory.mkdir()
+    for digest in (None, "sha256:../../escape", "sha256:" + "A" * 64):
+        with pytest.raises(ValueError, match="digest is malformed"):
+            s8_rehearsal.verify_retained_profiles(
+                tmp_path, [{"profile_sha256": digest, "profile_retained": True}]
+            )
+
+    text = b"(version 1)\n"
+    digest = "sha256:" + hashlib.sha256(text).hexdigest()
+    proofs = [{"profile_sha256": digest, "profile_retained": True}]
+    (directory / (digest[7:] + ".sb")).mkdir()
+    with pytest.raises(ValueError, match="must be regular files"):
+        s8_rehearsal.verify_retained_profiles(tmp_path, proofs)
+    (directory / (digest[7:] + ".sb")).rmdir()
+    elsewhere = tmp_path / "elsewhere.sb"
+    elsewhere.write_bytes(text)
+    (directory / (digest[7:] + ".sb")).symlink_to(elsewhere)
+    with pytest.raises(ValueError, match="must be regular files"):
+        s8_rehearsal.verify_retained_profiles(tmp_path, proofs)
+
+
+def test_a_required_sandbox_run_without_retained_profiles_is_refused(
+    rehearsed: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Retention is mandatory for a newer sandboxed run, as it is in the supplement."""
+    lifecycle = dict(read_json(rehearsed.state / "lifecycle.json"))
+    lifecycle["os_sandbox_required"] = True
+    lifecycle["worker_proofs"] = [
+        {
+            **p,
+            "os_sandbox_applied": True,
+            "mechanism": "darwin_sandbox_exec",
+            "profile_sha256": "sha256:" + "0" * 64,
+            "profile_retained": False,
+        }
+        for p in lifecycle["worker_proofs"]
+    ]
+    original = s8_rehearsal.read_json
+
+    def unretained(path: Path) -> Any:
+        return lifecycle if path == rehearsed.state / "lifecycle.json" else original(path)
+
+    monkeypatch.setattr(s8_rehearsal, "read_json", unretained)
+    with pytest.raises(ValueError, match="missing or unenforced"):
+        s8_rehearsal.inspect_rehearsal(rehearsed.state)
+
+
 def test_verification_of_a_run_without_retention_fields_is_unchanged(
     rehearsed: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:

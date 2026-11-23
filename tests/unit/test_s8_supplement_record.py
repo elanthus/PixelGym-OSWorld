@@ -13,6 +13,7 @@ import pytest
 
 from pixelgym.grounding.v5.contracts import content_digest
 from pixelgym.platform.s7_qualification import seal as seal_qualification
+from pixelgym.platform.s8_rehearsal import seal as seal_state
 from scripts import build_s8_supplement_record as generator
 from scripts.build_s8_supplement_record import S7_RUN, S8_RUN, Inputs, MissingInput
 
@@ -206,12 +207,12 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
     _write(state / f"worker-profiles/{PROFILE_DIGEST.removeprefix('sha256:')}.sb", PROFILE)
     lifecycle = _lifecycle(state, _refusal(), S8_SENDS)
     _write(state / "verification.json", {"campaign_total": 8})
-    _write(state / "seal.json", {"files": {}})
     _write(
         state / "acceptance-checks.json",
         {"checks": [{"name": "replay", "exit_status": 0, "elapsed_seconds": 0.1}]},
     )
     _ledger(state / "send-budget.sqlite", S8_SENDS)
+    seal_state(state)
     _write_s8_outputs(inputs, lifecycle, S8_SENDS)
     _write(s8_logs / "prepare-command.log", "command: tool prepare\nexit=0\n")
     _write(s8_logs / "prepare.stderr.log", "")
@@ -222,7 +223,14 @@ def build_tree(root: Path) -> tuple[Inputs, Path]:
     manifest = b'{"files": []}'
     files = []
     for run in (S7_RUN, S8_RUN):
-        _write(inputs.receipts / f"{run}-local.json", {"bytes": 100, "file_count": 4})
+        _write(
+            inputs.receipts / f"{run}-local.json",
+            {
+                "bytes": 100,
+                "file_count": 4,
+                "manifest_digest": content_digest(json.loads(manifest)),
+            },
+        )
         _write(inputs.archives / run / "manifest.json", manifest)
         files += [{"name": f"{run}/f{i}", "size": 25, "retention_mode": None} for i in range(4)]
         files.append(
@@ -303,6 +311,7 @@ def test_a_refusal_with_another_cause_is_recorded_not_refused(tmp_path: Path) ->
     state = inputs.s8_run / "state"
     other = {**_refusal("worker failed to start"), "selected_candidate_is_b": False}
     _write_s8_outputs(inputs, _lifecycle(state, other, S8_SENDS), S8_SENDS)
+    seal_state(state)
 
     supplement = _build(inputs, public)["derived"]["supplement"]
 
@@ -319,6 +328,7 @@ def test_send_counts_that_differ_from_the_plan_are_recorded_not_refused(tmp_path
     (state / "send-budget.sqlite").unlink()
     _ledger(state / "send-budget.sqlite", sends)
     _write_s8_outputs(inputs, _lifecycle(state, _refusal(), sends), sends)
+    seal_state(state)
 
     supplement = _build(inputs, public)["derived"]["supplement"]
 
@@ -344,14 +354,36 @@ def test_an_incomplete_upload_is_recorded_as_not_reconciling(tmp_path: Path) -> 
     )
 
 
-def test_an_altered_worker_profile_is_recorded_as_not_matching(tmp_path: Path) -> None:
+def test_a_profile_altered_after_sealing_is_refused(tmp_path: Path) -> None:
     inputs, public = build_tree(tmp_path)
     profile = inputs.s8_run / f"state/worker-profiles/{PROFILE_DIGEST.removeprefix('sha256:')}.sb"
     profile.write_bytes(b"(version 1)\n(allow default)\n")
 
+    with pytest.raises(ValueError, match="S8 supplement state differs from its seal"):
+        _build(inputs, public)
+
+
+def test_a_sealed_profile_that_differs_from_its_proof_is_recorded_as_not_matching(
+    tmp_path: Path,
+) -> None:
+    inputs, public = build_tree(tmp_path)
+    state = inputs.s8_run / "state"
+    profile = state / f"worker-profiles/{PROFILE_DIGEST.removeprefix('sha256:')}.sb"
+    profile.write_bytes(b"(version 1)\n(allow default)\n")
+    seal_state(state)
+
     proofs = _build(inputs, public)["derived"]["supplement"]["worker_proofs"]
 
     assert proofs[0]["stored_profile_matches_digest"] is False
+
+
+def test_an_archive_manifest_that_differs_from_its_receipt_is_refused(tmp_path: Path) -> None:
+    inputs, public = build_tree(tmp_path)
+    # Same length as the fixture manifest, so only the digest binding can catch it.
+    _write(inputs.archives / S8_RUN / "manifest.json", b'{"fileZ": []}')
+
+    with pytest.raises(ValueError, match=f"archive manifest for {S8_RUN} differs"):
+        _build(inputs, public)
 
 
 def test_a_plan_for_another_scenario_is_refused(tmp_path: Path) -> None:
